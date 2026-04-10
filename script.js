@@ -42,3 +42,13 @@ function displayTasks() {
     `;
   });
 }
+function acceptTask(index) {
+  tasks.splice(index, 1);
+  saveTasks();
+
+  alert("Task accepted!");
+  displayTasks();
+}
+window.onload = function() {
+  displayTasks();
+};
