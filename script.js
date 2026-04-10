@@ -25,3 +25,20 @@ function postTask() {
   document.getElementById("taskInput").value = "";
   document.getElementById("amountInput").value = "";
 }
+function displayTasks() {
+  const taskList = document.getElementById("taskList");
+
+  if (!taskList) return;
+
+  taskList.innerHTML = "";
+
+  tasks.forEach((task, index) => {
+    taskList.innerHTML += `
+      <div style="margin:10px; padding:10px; border:1px solid white;">
+        <p>${task.text}</p>
+        <strong>₦${task.amount}</strong><br><br>
+        <button onclick="acceptTask(${index})">Accept</button>
+      </div>
+    `;
+  });
+}
