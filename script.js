@@ -31,8 +31,8 @@ function postTask() {
   tasks.push(task);
   saveData();
 
-  alert("Task posted!");
-
+  showPopup("Task posted successfully!");
+  
   // Clear inputs
   document.getElementById("taskInput").value = "";
   document.getElementById("amountInput").value = "";
