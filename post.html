@@ -1,25 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Post Task - RunIT</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-
 <div class="app">
 
-  <h2>Post a Task</h2>
+  <div class="header">
+    <div>Post Task</div>
+  </div>
 
-  <input id="taskInput" type="text" placeholder="What do you need done?">
+  <div class="card">
+    <input id="taskInput" type="text" placeholder="Task description">
+    <br><br>
+    <input id="amountInput" type="number" placeholder="Amount ₦">
+  </div>
 
-  <input id="amountInput" type="number" placeholder="Amount (₦)">
+  <button class="main-btn" onclick="postTask()">Post Task</button>
 
-  <button onclick="postTask()">Post Task</button>
+  <div class="nav">
+    <div onclick="location.href='index.html'">🏠 Home</div>
+    <div onclick="location.href='tasks.html'">📋 Tasks</div>
+    <div onclick="location.href='wallet.html'">💳 Wallet</div>
+  </div>
 
 </div>
-
-<script src="script.js"></script>
-
-</body>
-</html>
