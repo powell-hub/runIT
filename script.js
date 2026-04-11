@@ -51,13 +51,13 @@ function displayTasks() {
   }
 
   tasks.forEach((task, index) => {
-    taskList.innerHTML += `
-      <div style="margin:10px; padding:10px; border:1px solid white;">
-        <p>${task.text}</p>
-        <strong>₦${task.amount}</strong><br><br>
-        <button onclick="acceptTask(${index})">Accept</button>
-      </div>
-    `;
+   taskList.innerHTML += `
+  <div class="task">
+    <p>${task.text}</p>
+    <strong>₦${task.amount}</strong><br><br>
+    <button onclick="acceptTask(${index})">Accept</button>
+  </div>
+`;
   });
 }
 
