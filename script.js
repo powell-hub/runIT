@@ -6,10 +6,6 @@ if (!currentUser && !window.location.pathname.includes("login.html")) {
   window.location.href = "login.html";
 }
 
-function login(username) {
-  localStorage.setItem("currentUser", username);
-  location.reload();
-}
 
 function logout() {
   localStorage.removeItem("currentUser");
