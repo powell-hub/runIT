@@ -91,10 +91,10 @@ function acceptTask(index) {
   const task = tasks[index];
 
   // Prevent accepting your own task
-  if (task.owner === "user1") {
-    alert("You cannot accept your own task");
-    return;
-  }
+ // if (task.owner === "user1") {
+ //   alert("You cannot accept your own task");
+// return;
+//  }
 
   // Prevent re-accepting
   if (task.status !== "pending") {
