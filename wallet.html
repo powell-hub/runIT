@@ -9,30 +9,23 @@
 
 <div class="app">
 
-  <h2>💳 Wallet</h2>
+  <div class="header">
+    <div>Wallet</div>
+  </div>
 
-  <!-- BALANCE DISPLAY -->
-  <div style="margin:20px; padding:20px; border:1px solid white;">
-    <p>Your Balance</p>
+  <div class="card">
+    <p>Balance</p>
     <h1>₦<span id="balance">0</span></h1>
   </div>
 
-  <!-- WITHDRAW BUTTON -->
-  <button onclick="withdraw()" style="padding:10px 20px;">
-    Withdraw Money
-  </button>
+  <button class="main-btn" onclick="withdraw()">Withdraw</button>
 
-  <br><br>
-
-  <!-- BACK BUTTON -->
-  <button onclick="location.href='index.html'">
-    Back
-  </button>
+  <div class="nav">
+    <div onclick="location.href='index.html'">🏠 Home</div>
+    <div onclick="location.href='tasks.html'">📋 Tasks</div>
+    <div>💳 Wallet</div>
+  </div>
 
 </div>
-
-<!-- VERY IMPORTANT: SCRIPT MUST BE HERE -->
-<script src="script.js"></script>
-
 </body>
 </html>
