@@ -20,11 +20,14 @@ function postTask() {
     return;
   }
 
-  const task = {
-    text: text,
-    amount: Number(amount)
-  };
-
+ const task = {
+  text: text,
+  amount: Number(amount),
+  status: "pending",
+  owner: "user1",   // temporary user
+  worker: null
+};
+  
   tasks.push(task);
   saveData();
 
