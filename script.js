@@ -237,6 +237,52 @@ function showPopup(message) {
     popup.style.display = "none";
   }, 2000);
 }
+//////////////////////////////////////////////////
+// ADD SERVICE
+//////////////////////////////////////////////////
+function addService() {
+  const name = document.getElementById("serviceName").value;
+  const price = document.getElementById("servicePrice").value;
+
+  if (!name || !price) {
+    showPopup("Fill all fields");
+    return;
+  }
+
+  const service = {
+    name,
+    price: Number(price),
+    owner: currentUser
+  };
+
+  services.push(service);
+  saveData();
+
+  showPopup("Service added!");
+
+  document.getElementById("serviceName").value = "";
+  document.getElementById("servicePrice").value = "";
+}
+
+//////////////////////////////////////////////////
+// DISPLAY SERVICES
+//////////////////////////////////////////////////
+function displayServices() {
+  const list = document.getElementById("serviceList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  services.forEach(service => {
+    list.innerHTML += `
+      <div class="task">
+        <p>${service.name}</p>
+        <strong>₦${service.price}</strong><br>
+        <small>By ${service.owner}</small>
+      </div>
+    `;
+  });
+}
 
 //////////////////////////////////////////////////
 // LOAD
@@ -244,8 +290,8 @@ function showPopup(message) {
 window.onload = function () {
   displayTasks();
   updateWallet();
+  displayServices();
 };
-
 if (!currentUser) {
   window.location.href = "login.html";
 }
