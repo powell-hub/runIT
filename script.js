@@ -52,7 +52,14 @@ function displayTasks() {
     taskList.innerHTML = "<p>No tasks available</p>";
     return;
   }
+tasks.forEach((task, index) => {
 
+  // FIX OLD TASKS
+  if (!task.status) {
+    task.status = "pending";
+    task.owner = "user1";
+    task.worker = null;
+  }
   tasks.forEach((task, index) => {
 
   if (task.status === "pending") {
