@@ -225,40 +225,30 @@ function showPopup(message) {
 //////////////////////////////////////////////////
 function addService() {
   const name = document.getElementById("serviceName").value;
-  const price = document.getElementById("servicePrice").value;
+  const desc = document.getElementById("serviceDesc").value;
+  const phone = document.getElementById("servicePhone").value;
 
-  if (!name || !price) {
+  if (!name || !desc || !phone) {
     showPopup("Fill all fields");
     return;
   }
 
-  services.push({
+  const service = {
     name,
-    price: Number(price),
+    desc,
+    phone,
     owner: currentUser
-  });
+  };
 
+  services.push(service);
   saveData();
+
   showPopup("Service added!");
+
+  document.getElementById("serviceName").value = "";
+  document.getElementById("serviceDesc").value = "";
+  document.getElementById("servicePhone").value = "";
 }
-
-function displayServices() {
-  const list = document.getElementById("serviceList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  services.forEach(service => {
-    list.innerHTML += `
-      <div class="task">
-        <p>${service.name}</p>
-        <strong>₦${service.price}</strong><br>
-        <small>By ${service.owner}</small>
-      </div>
-    `;
-  });
-}
-
 //////////////////////////////////////////////////
 // LOAD
 //////////////////////////////////////////////////
