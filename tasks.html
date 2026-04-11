@@ -9,12 +9,26 @@
 
 <div class="app">
 
-  <div class="header">
+  <!-- HEADER (WITH LOGOUT INSIDE) -->
+  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
     <div>Available Tasks</div>
+
+    <button onclick="logout()" style="
+      padding:6px 10px;
+      border:none;
+      border-radius:6px;
+      background:#ff4d4d;
+      color:white;
+      cursor:pointer;
+    ">
+      Logout
+    </button>
   </div>
 
+  <!-- TASK LIST -->
   <div id="taskList"></div>
 
+  <!-- NAVIGATION -->
   <div class="nav">
     <div onclick="location.href='index.html'">🏠 Home</div>
     <div>📋 Tasks</div>
@@ -23,6 +37,8 @@
 
 </div>
 
-  <script src="script.js"></script>
+<!-- SCRIPT -->
+<script src="script.js"></script>
+
 </body>
 </html>
