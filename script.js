@@ -1,5 +1,6 @@
-let services = JSON.parse(localStorage.getItem("services")) || [];
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let services = JSON.parse(localStorage.getItem("services")) || [];
+let balance = Number(localStorage.getItem("balance")) || 0;
 
 // USER SYSTEM
 let currentUser = localStorage.getItem("currentUser");
