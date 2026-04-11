@@ -129,7 +129,7 @@ function acceptTask(index) {
   }
 
   task.status = "accepted";
-  task.worker = "worker";
+  task.worker = "currentUser";
 
   saveData();
   showPopup("Task accepted!");
