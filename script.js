@@ -1,3 +1,16 @@
+// USER SYSTEM
+let currentUser = localStorage.getItem("currentUser");
+
+function login(username) {
+  localStorage.setItem("currentUser", username);
+  location.reload();
+}
+
+function logout() {
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
 // LOAD DATA
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let balance = Number(localStorage.getItem("balance")) || 0;
