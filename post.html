@@ -1,17 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Post Task - RunIT</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
 <div class="app">
 
+  <!-- HEADER -->
   <div class="header">
     <div>Post Task</div>
   </div>
 
+  <!-- FORM CARD -->
   <div class="card">
-    <input id="taskInput" type="text" placeholder="Task description">
-    <br><br>
-    <input id="amountInput" type="number" placeholder="Amount ₦">
+
+    <input 
+      id="taskInput" 
+      type="text" 
+      placeholder="What do you need done?"
+      style="width:100%; padding:10px; margin-bottom:10px;"
+    >
+
+    <input 
+      id="amountInput" 
+      type="number" 
+      placeholder="Enter amount (₦)"
+      style="width:100%; padding:10px;"
+    >
+
   </div>
 
-  <button class="main-btn" onclick="postTask()">Post Task</button>
+  <!-- BUTTON -->
+  <button class="main-btn" onclick="postTask()">
+    Post Task
+  </button>
 
+  <!-- NAVIGATION -->
   <div class="nav">
     <div onclick="location.href='index.html'">🏠 Home</div>
     <div onclick="location.href='tasks.html'">📋 Tasks</div>
@@ -19,3 +46,9 @@
   </div>
 
 </div>
+
+<!-- SCRIPT -->
+<script src="script.js"></script>
+
+</body>
+</html>
