@@ -92,13 +92,13 @@ function acceptTask(index) {
 
   // Prevent accepting your own task
   if (task.owner === "user1") {
-    alert("You cannot accept your own task");
+    showPopup("You cannot accept your own task");
  return;
   }
 
   // Prevent re-accepting
   if (task.status !== "pending") {
-    alert("Task already taken");
+    showPopup("Task already taken");
     return;
   }
 
@@ -112,7 +112,7 @@ function acceptTask(index) {
 
   saveData();
 
-  alert("Task accepted! You earned ₦" + earnings);
+  showPopup("Task accepted! Earned ₦" + earnings);
 
   displayTasks();
   updateWallet();
