@@ -54,14 +54,28 @@ function displayTasks() {
   }
 
   tasks.forEach((task, index) => {
-   taskList.innerHTML += `
-  <div class="task">
-    <p>${task.text}</p>
-    <strong>₦${task.amount}</strong><br><br>
-    <button onclick="acceptTask(${index})">Accept</button>
-  </div>
-`;
-  });
+
+  if (task.status === "pending") {
+    taskList.innerHTML += `
+      <div class="task">
+        <p>${task.text}</p>
+        <strong>₦${task.amount}</strong><br><br>
+        <button onclick="acceptTask(${index})">Accept</button>
+      </div>
+    `;
+  }
+
+  if (task.status === "accepted") {
+    taskList.innerHTML += `
+      <div class="task" style="opacity:0.6;">
+        <p>${task.text}</p>
+        <strong>₦${task.amount}</strong><br>
+        <small>In Progress...</small>
+      </div>
+    `;
+  }
+
+});
 }
 
 //////////////////////////////////////////////////
