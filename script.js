@@ -1,5 +1,10 @@
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let balance = Number(localStorage.getItem("balance")) || 0;
 
+function saveData() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem("balance", balance);
+}
 function saveTasks() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 }
