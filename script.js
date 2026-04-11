@@ -3,15 +3,14 @@ let services = JSON.parse(localStorage.getItem("services")) || [];
 // USER SYSTEM
 let currentUser = localStorage.getItem("currentUser");
 
-// ONLY redirect if NOT on login page
+// Redirect if not logged in
 if (!currentUser && !window.location.pathname.includes("login.html")) {
   window.location.href = "login.html";
 }
 
-
 function logout() {
   localStorage.removeItem("currentUser");
-  location.reload();
+  window.location.href = "login.html";
 }
 
 // LOAD DATA
@@ -41,7 +40,7 @@ function postTask() {
     text,
     amount: Number(amount),
     status: "pending",
-    owner: "currentUser",
+    owner: currentUser,
     worker: null
   };
 
@@ -65,14 +64,13 @@ function displayTasks() {
 
   tasks.forEach((task, index) => {
 
-    // FIX OLD TASKS
     if (!task.status) {
       task.status = "pending";
-      task.owner = "poster";
+      task.owner = currentUser;
       task.worker = null;
     }
 
-    // 🟡 PENDING
+    // PENDING
     if (task.status === "pending") {
       taskList.innerHTML += `
         <div class="task">
@@ -83,49 +81,51 @@ function displayTasks() {
       `;
     }
 
-    // 🔵 ACCEPTED → WORKER SUBMITS
-   if (task.status === "accepted") {
-  if (task.worker === currentUser) {
-    taskList.innerHTML += `
-      <div class="task">
-        <p>${task.text}</p>
-        <strong>₦${task.amount}</strong><br>
-        <small>In Progress...</small><br><br>
-        <button onclick="submitTask(${index})">Mark as Done</button>
-      </div>
-    `;
-  } else {
-    taskList.innerHTML += `
-      <div class="task" style="opacity:0.6;">
-        <p>${task.text}</p>
-        <strong>₦${task.amount}</strong><br>
-        <small>In Progress...</small>
-      </div>
-    `;
-  }
-}
-    // 🟠 SUBMITTED → POSTER CONFIRMS
-   if (task.status === "submitted") {
-  if (task.owner === currentUser) {
-    taskList.innerHTML += `
-      <div class="task">
-        <p>${task.text}</p>
-        <strong>₦${task.amount}</strong><br>
-        <small>Awaiting confirmation...</small><br><br>
-        <button onclick="approveTask(${index})">Confirm & Pay</button>
-      </div>
-    `;
-  } else {
-    taskList.innerHTML += `
-      <div class="task" style="opacity:0.6;">
-        <p>${task.text}</p>
-        <strong>₦${task.amount}</strong><br>
-        <small>Waiting for poster approval...</small>
-      </div>
-    `;
-  }
-}
-    // 🟢 COMPLETED
+    // ACCEPTED
+    if (task.status === "accepted") {
+      if (task.worker === currentUser) {
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>In Progress...</small><br><br>
+            <button onclick="submitTask(${index})">Mark as Done</button>
+          </div>
+        `;
+      } else {
+        taskList.innerHTML += `
+          <div class="task" style="opacity:0.6;">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>In Progress...</small>
+          </div>
+        `;
+      }
+    }
+
+    // SUBMITTED
+    if (task.status === "submitted") {
+      if (task.owner === currentUser) {
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>Awaiting confirmation...</small><br><br>
+            <button onclick="approveTask(${index})">Confirm & Pay</button>
+          </div>
+        `;
+      } else {
+        taskList.innerHTML += `
+          <div class="task" style="opacity:0.6;">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>Waiting for poster approval...</small>
+          </div>
+        `;
+      }
+    }
+
+    // COMPLETED
     if (task.status === "completed") {
       taskList.innerHTML += `
         <div class="task" style="opacity:0.5;">
@@ -151,7 +151,7 @@ function acceptTask(index) {
   }
 
   task.status = "accepted";
-  task.worker = "currentUser";
+  task.worker = currentUser;
 
   saveData();
   showPopup("Task accepted!");
@@ -160,13 +160,13 @@ function acceptTask(index) {
 }
 
 //////////////////////////////////////////////////
-// WORKER SUBMITS TASK
+// SUBMIT TASK
 //////////////////////////////////////////////////
 function submitTask(index) {
   const task = tasks[index];
 
-  if (task.status !== "accepted") {
-    showPopup("Invalid action");
+  if (task.worker !== currentUser) {
+    showPopup("Not your task");
     return;
   }
 
@@ -179,13 +179,13 @@ function submitTask(index) {
 }
 
 //////////////////////////////////////////////////
-// POSTER APPROVES & PAYS
+// APPROVE TASK
 //////////////////////////////////////////////////
 function approveTask(index) {
   const task = tasks[index];
 
-  if (task.status !== "submitted") {
-    showPopup("Invalid action");
+  if (task.owner !== currentUser) {
+    showPopup("Not allowed");
     return;
   }
 
@@ -237,8 +237,9 @@ function showPopup(message) {
     popup.style.display = "none";
   }, 2000);
 }
+
 //////////////////////////////////////////////////
-// ADD SERVICE
+// SERVICES
 //////////////////////////////////////////////////
 function addService() {
   const name = document.getElementById("serviceName").value;
@@ -259,14 +260,8 @@ function addService() {
   saveData();
 
   showPopup("Service added!");
-
-  document.getElementById("serviceName").value = "";
-  document.getElementById("servicePrice").value = "";
 }
 
-//////////////////////////////////////////////////
-// DISPLAY SERVICES
-//////////////////////////////////////////////////
 function displayServices() {
   const list = document.getElementById("serviceList");
   if (!list) return;
@@ -292,6 +287,3 @@ window.onload = function () {
   updateWallet();
   displayServices();
 };
-if (!currentUser) {
-  window.location.href = "login.html";
-}
