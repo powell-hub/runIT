@@ -2,27 +2,42 @@
 <html>
 <head>
   <title>RunIT</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
-<body style="text-align:center; font-family: Arial; margin-top:100px;">
+<body>
 
-  <h1>RunIT</h1>
+<div class="app">
 
-  <button onclick="location.href='post.html'">
-    Post a Task
-  </button>
+  <div class="header">
+    <div class="logo">Run<span>IT</span></div>
+    <div>🔔</div>
+  </div>
 
-  <br><br>
+  <div class="card">
+    <p>Welcome back,</p>
+    <h3>User 👋</h3>
+  </div>
 
-  <button onclick="location.href='tasks.html'">
-    View Tasks
-  </button>
+  <div class="action get-help" onclick="location.href='post.html'">
+    ⚡ Get Help
+  </div>
 
-  <br><br>
+  <div class="action earn" onclick="location.href='tasks.html'">
+    💰 Earn Money
+  </div>
 
-  <button onclick="location.href='wallet.html'">
-    Open Wallet
-  </button>
+  <div class="action wallet" onclick="location.href='wallet.html'">
+    💳 Wallet
+  </div>
+
+  <div class="nav">
+    <div>🏠 Home</div>
+    <div onclick="location.href='tasks.html'">📋 Tasks</div>
+    <div onclick="location.href='wallet.html'">💳 Wallet</div>
+  </div>
+
+</div>
 
 </body>
 </html>
