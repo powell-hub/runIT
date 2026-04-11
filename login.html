@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - RunIT</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <div>Login</div>
+  </div>
+
+  <div class="card">
+    <input id="username" placeholder="Enter your name" style="width:100%; padding:10px;">
+  </div>
+
+  <button class="main-btn" onclick="handleLogin()">Login</button>
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+function handleLogin() {
+  const name = document.getElementById("username").value;
+  if (!name) return alert("Enter name");
+
+  login(name);
+}
+</script>
+
+</body>
+</html>
