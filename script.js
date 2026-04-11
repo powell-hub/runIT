@@ -37,7 +37,7 @@ function postTask() {
     text,
     amount: Number(amount),
     status: "pending",
-    owner: "poster",
+    owner: "currentUser",
     worker: null
   };
 
