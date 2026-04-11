@@ -249,6 +249,29 @@ function addService() {
   document.getElementById("serviceDesc").value = "";
   document.getElementById("servicePhone").value = "";
 }
+
+function displayServices() {
+  const list = document.getElementById("serviceList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  if (services.length === 0) {
+    list.innerHTML = "<p>No services available</p>";
+    return;
+  }
+
+  services.forEach(service => {
+    list.innerHTML += `
+      <div class="task">
+        <h3>${service.name}</h3>
+        <p>${service.desc}</p>
+        <strong>Contact: ${service.phone}</strong><br>
+        <small>By ${service.owner}</small>
+      </div>
+    `;
+  });
+}
 //////////////////////////////////////////////////
 // LOAD
 //////////////////////////////////////////////////
