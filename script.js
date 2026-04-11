@@ -80,29 +80,47 @@ function displayTasks() {
     }
 
     // 🔵 ACCEPTED → WORKER SUBMITS
-    if (task.status === "accepted") {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>In Progress...</small><br><br>
-          <button onclick="submitTask(${index})">Mark as Done</button>
-        </div>
-      `;
-    }
-
+   if (task.status === "accepted") {
+  if (task.worker === currentUser) {
+    taskList.innerHTML += `
+      <div class="task">
+        <p>${task.text}</p>
+        <strong>₦${task.amount}</strong><br>
+        <small>In Progress...</small><br><br>
+        <button onclick="submitTask(${index})">Mark as Done</button>
+      </div>
+    `;
+  } else {
+    taskList.innerHTML += `
+      <div class="task" style="opacity:0.6;">
+        <p>${task.text}</p>
+        <strong>₦${task.amount}</strong><br>
+        <small>In Progress...</small>
+      </div>
+    `;
+  }
+}
     // 🟠 SUBMITTED → POSTER CONFIRMS
-    if (task.status === "submitted") {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>Awaiting confirmation...</small><br><br>
-          <button onclick="approveTask(${index})">Confirm & Pay</button>
-        </div>
-      `;
-    }
-
+   if (task.status === "submitted") {
+  if (task.owner === currentUser) {
+    taskList.innerHTML += `
+      <div class="task">
+        <p>${task.text}</p>
+        <strong>₦${task.amount}</strong><br>
+        <small>Awaiting confirmation...</small><br><br>
+        <button onclick="approveTask(${index})">Confirm & Pay</button>
+      </div>
+    `;
+  } else {
+    taskList.innerHTML += `
+      <div class="task" style="opacity:0.6;">
+        <p>${task.text}</p>
+        <strong>₦${task.amount}</strong><br>
+        <small>Waiting for poster approval...</small>
+      </div>
+    `;
+  }
+}
     // 🟢 COMPLETED
     if (task.status === "completed") {
       taskList.innerHTML += `
