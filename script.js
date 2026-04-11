@@ -23,7 +23,7 @@ function postTask() {
   };
 
   tasks.push(task);
-  saveTasks();
+  saveData();
 
   alert("Task posted!");
 
@@ -49,7 +49,7 @@ function displayTasks() {
 }
 function acceptTask(index) {
   tasks.splice(index, 1);
-  saveTasks();
+  saveData();
 
   alert("Task accepted!");
   displayTasks();
