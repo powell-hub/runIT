@@ -1,21 +1,101 @@
 body {
-  font-family: Arial;
-  background: #111;
-  color: white;
-  text-align: center;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #0b0c1a;
 }
 
+/* APP CONTAINER */
 .app {
-  margin-top: 100px;
+  max-width: 400px;
+  margin: auto;
+  background: #f5f6fa;
+  min-height: 100vh;
+  border-radius: 25px;
+  padding-bottom: 80px;
 }
 
-input {
-  display: block;
-  margin: 10px auto;
-  padding: 10px;
-  width: 80%;
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  font-weight: bold;
 }
 
-button {
-  padding: 10px 20px;
+/* LOGO */
+.logo span {
+  color: #6c4cff;
+}
+
+/* CARD */
+.card {
+  background: white;
+  margin: 10px 20px;
+  padding: 15px;
+  border-radius: 15px;
+}
+
+/* ACTION BUTTONS */
+.action {
+  margin: 10px 20px;
+  padding: 15px;
+  border-radius: 15px;
+  font-weight: bold;
+}
+
+.get-help {
+  background: #e7e6fb;
+}
+
+.earn {
+  background: #f4e7d3;
+}
+
+.wallet {
+  background: #d7eadf;
+}
+
+/* TASK */
+.task {
+  background: white;
+  margin: 10px 20px;
+  padding: 15px;
+  border-radius: 15px;
+}
+
+.task button {
+  background: #6c4cff;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+}
+
+/* MAIN BUTTON */
+.main-btn {
+  width: 90%;
+  margin: 20px;
+  padding: 15px;
+  background: #6c4cff;
+  color: white;
+  border: none;
+  border-radius: 12px;
+}
+
+/* NAVBAR */
+.nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 1px solid #ddd;
+}
+
+.nav div {
+  text-align: center;
+  font-size: 12px;
 }
