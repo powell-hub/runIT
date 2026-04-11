@@ -1,9 +1,9 @@
 let services = JSON.parse(localStorage.getItem("services")) || [];
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
 // USER SYSTEM
 let currentUser = localStorage.getItem("currentUser");
 
-// Redirect if not logged in
 if (!currentUser && !window.location.pathname.includes("login.html")) {
   window.location.href = "login.html";
 }
@@ -13,15 +13,25 @@ function logout() {
   window.location.href = "login.html";
 }
 
-// LOAD DATA
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let balance = Number(localStorage.getItem("balance")) || 0;
+// PER-USER WALLET (NEW FIX)
+let balances = JSON.parse(localStorage.getItem("balances")) || {};
+
+function getBalance(user) {
+  if (!balances[user]) balances[user] = 0;
+  return balances[user];
+}
+
+function updateBalance(user, amount) {
+  if (!balances[user]) balances[user] = 0;
+  balances[user] += amount;
+  localStorage.setItem("balances", JSON.stringify(balances));
+}
 
 // SAVE DATA
 function saveData() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("balance", balance);
   localStorage.setItem("services", JSON.stringify(services));
+  localStorage.setItem("balances", JSON.stringify(balances));
 }
 
 //////////////////////////////////////////////////
@@ -64,13 +74,6 @@ function displayTasks() {
 
   tasks.forEach((task, index) => {
 
-    if (!task.status) {
-      task.status = "pending";
-      task.owner = currentUser;
-      task.worker = null;
-    }
-
-    // PENDING
     if (task.status === "pending") {
       taskList.innerHTML += `
         <div class="task">
@@ -81,51 +84,30 @@ function displayTasks() {
       `;
     }
 
-    // ACCEPTED
     if (task.status === "accepted") {
       if (task.worker === currentUser) {
         taskList.innerHTML += `
           <div class="task">
             <p>${task.text}</p>
             <strong>₦${task.amount}</strong><br>
-            <small>In Progress...</small><br><br>
             <button onclick="submitTask(${index})">Mark as Done</button>
-          </div>
-        `;
-      } else {
-        taskList.innerHTML += `
-          <div class="task" style="opacity:0.6;">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>In Progress...</small>
           </div>
         `;
       }
     }
 
-    // SUBMITTED
     if (task.status === "submitted") {
       if (task.owner === currentUser) {
         taskList.innerHTML += `
           <div class="task">
             <p>${task.text}</p>
             <strong>₦${task.amount}</strong><br>
-            <small>Awaiting confirmation...</small><br><br>
             <button onclick="approveTask(${index})">Confirm & Pay</button>
-          </div>
-        `;
-      } else {
-        taskList.innerHTML += `
-          <div class="task" style="opacity:0.6;">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>Waiting for poster approval...</small>
           </div>
         `;
       }
     }
 
-    // COMPLETED
     if (task.status === "completed") {
       taskList.innerHTML += `
         <div class="task" style="opacity:0.5;">
@@ -135,7 +117,6 @@ function displayTasks() {
         </div>
       `;
     }
-
   });
 }
 
@@ -173,13 +154,13 @@ function submitTask(index) {
   task.status = "submitted";
 
   saveData();
-  showPopup("Task submitted for approval");
+  showPopup("Task submitted");
 
   displayTasks();
 }
 
 //////////////////////////////////////////////////
-// APPROVE TASK
+// APPROVE TASK (PAYMENT SYSTEM FIXED)
 //////////////////////////////////////////////////
 function approveTask(index) {
   const task = tasks[index];
@@ -192,31 +173,32 @@ function approveTask(index) {
   task.status = "completed";
 
   const earnings = Math.floor(task.amount * 0.9);
-  balance += earnings;
+
+  updateBalance(task.worker, earnings); // 👈 PAY WORKER ONLY
 
   saveData();
 
-  showPopup("Task approved! ₦" + earnings + " paid");
+  showPopup("Paid ₦" + earnings);
 
   displayTasks();
   updateWallet();
 }
 
 //////////////////////////////////////////////////
-// WALLET
+// WALLET (PER USER FIXED)
 //////////////////////////////////////////////////
 function updateWallet() {
   const el = document.getElementById("balance");
-  if (el) el.innerText = balance;
+  if (el) el.innerText = getBalance(currentUser);
 }
 
 function withdraw() {
-  if (balance < 1000) {
+  if (getBalance(currentUser) < 1000) {
     showPopup("Minimum withdrawal is ₦1000");
     return;
   }
 
-  balance = 0;
+  balances[currentUser] = 0;
   saveData();
   updateWallet();
 
@@ -224,7 +206,7 @@ function withdraw() {
 }
 
 //////////////////////////////////////////////////
-// POPUP
+// POPUP SYSTEM (ONLY FEEDBACK METHOD)
 //////////////////////////////////////////////////
 function showPopup(message) {
   const popup = document.getElementById("popup");
@@ -250,15 +232,13 @@ function addService() {
     return;
   }
 
-  const service = {
+  services.push({
     name,
     price: Number(price),
     owner: currentUser
-  };
+  });
 
-  services.push(service);
   saveData();
-
   showPopup("Service added!");
 }
 
@@ -287,11 +267,11 @@ window.onload = function () {
   updateWallet();
   displayServices();
   setGreeting();
-};function setGreeting() {
+};
+
+function setGreeting() {
   const el = document.getElementById("greeting");
   if (!el) return;
 
-  const name = localStorage.getItem("currentUser");
-
-  el.innerText = "Hello " + (name || "User");
+  el.innerText = "Hello " + currentUser;
 }
