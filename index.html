@@ -3,45 +3,51 @@
 <head>
   <title>RunIT</title>
   <link rel="stylesheet" href="style.css">
-  <button onclick="logout()">Logout</button>
 </head>
 
 <body>
 
 <div class="app">
 
-  <div class="header">
-    <div class="logo">Run<span>IT</span></div>
-    <div>🔔</div>
+  <!-- HEADER -->
+  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div>RunIT</div>
+
+    <button onclick="logout()" 
+      style="padding:6px 10px; border:none; border-radius:6px; background:#ff4d4d; color:white;">
+      Logout
+    </button>
   </div>
 
+  <!-- WALLET -->
   <div class="card">
-    <p>Welcome back,</p>
-    <h3>User 👋</h3>
+    <h3>Wallet Balance</h3>
+    <h1>₦<span id="balance">0</span></h1>
   </div>
 
-  <div class="action get-help" onclick="location.href='post.html'">
-    ⚡ Get Help
+  <!-- NAV BUTTONS -->
+  <div class="card">
+    <button onclick="location.href='tasks.html'" class="main-btn">📋 Tasks</button><br><br>
+    <button onclick="location.href='services.html'" class="main-btn">🛠 Services</button>
   </div>
 
-  <div class="action earn" onclick="location.href='tasks.html'">
-    💰 Earn Money
-  </div>
+  <!-- POPUP -->
+  <div id="popup" style="
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #6c4cff;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    display: none;
+    z-index: 999;
+  "></div>
 
-  <div class="action wallet" onclick="location.href='wallet.html'">
-    💳 Wallet
-  </div>
-
-  <div class="nav">
-    <div>🏠 Home</div>
-    <div onclick="location.href='tasks.html'">📋 Tasks</div>
-    <div onclick="location.href='wallet.html'">💳 Wallet</div>
-  </div>
-
-  <div class="action" onclick="location.href='services.html'">
-  🛠 Services
 </div>
-</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
