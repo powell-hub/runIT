@@ -287,3 +287,11 @@ window.onload = function () {
   updateWallet();
   displayServices();
 };
+function setGreeting() {
+  const el = document.getElementById("greeting");
+  if (!el) return;
+
+  const name = localStorage.getItem("currentUser");
+
+  el.innerText = "Hello " + (name || "User");
+}
