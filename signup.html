@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Signup - RunIT</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header">Create Account</div>
+
+  <div class="card">
+    <input id="username" placeholder="Username" style="width:100%; padding:10px;"><br><br>
+    <input id="password" type="password" placeholder="Password" style="width:100%; padding:10px;">
+  </div>
+
+  <button class="main-btn" onclick="signup()">Sign Up</button>
+
+  <p onclick="location.href='login.html'">Already have account? Login</p>
+
+</div>
+
+<script src="script.js"></script>
+
+<script>
+function signup() {
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+
+  if (!user || !pass) {
+    showPopup("Fill all fields");
+    return;
+  }
+
+  let users = JSON.parse(localStorage.getItem("users")) || [];
+
+  users.push({ username: user, password: pass });
+
+  localStorage.setItem("users", JSON.stringify(users));
+
+  showPopup("Account created!");
+  setTimeout(() => location.href = "login.html", 1000);
+}
+</script>
+
+</body>
+</html>
