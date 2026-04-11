@@ -24,7 +24,7 @@ function postTask() {
   text: text,
   amount: Number(amount),
   status: "pending",
-  owner: "user1",   // temporary user
+  owner: "poster",   // temporary user
   worker: null
 };
   
@@ -91,10 +91,10 @@ function acceptTask(index) {
   const task = tasks[index];
 
   // Prevent accepting your own task
- // if (task.owner === "user1") {
- //   alert("You cannot accept your own task");
-// return;
-//  }
+  if (task.owner === "user1") {
+    alert("You cannot accept your own task");
+ return;
+  }
 
   // Prevent re-accepting
   if (task.status !== "pending") {
@@ -104,7 +104,7 @@ function acceptTask(index) {
 
   // Update task instead of deleting
   task.status = "accepted";
-  task.worker = "user1";
+  task.worker = "worker";
 
   // Earnings
   const earnings = Math.floor(task.amount * 0.9);
