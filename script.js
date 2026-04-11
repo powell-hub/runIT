@@ -84,13 +84,25 @@ function displayTasks() {
 function acceptTask(index) {
   const task = tasks[index];
 
-  // User earns 90%
+  // Prevent accepting your own task
+  if (task.owner === "user1") {
+    alert("You cannot accept your own task");
+    return;
+  }
+
+  // Prevent re-accepting
+  if (task.status !== "pending") {
+    alert("Task already taken");
+    return;
+  }
+
+  // Update task instead of deleting
+  task.status = "accepted";
+  task.worker = "user1";
+
+  // Earnings
   const earnings = Math.floor(task.amount * 0.9);
-
   balance += earnings;
-
-  // Remove task
-  tasks.splice(index, 1);
 
   saveData();
 
@@ -99,7 +111,6 @@ function acceptTask(index) {
   displayTasks();
   updateWallet();
 }
-
 //////////////////////////////////////////////////
 // UPDATE WALLET DISPLAY
 //////////////////////////////////////////////////
