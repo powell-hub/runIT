@@ -26,11 +26,18 @@
 <script>
 function handleLogin() {
   const name = document.getElementById("username").value;
-  if (!name) return alert("Enter name");
 
-  login(name);
+  if (!name) {
+    alert("Enter name");
+    return;
+  }
+
+  localStorage.setItem("currentUser", name);
+
+  // Redirect to main app
+  window.location.href = "index.html";
 }
 </script>
-
+  
 </body>
 </html>
