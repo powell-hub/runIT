@@ -1,3 +1,5 @@
+let services = JSON.parse(localStorage.getItem("services")) || [];
+
 // USER SYSTEM
 let currentUser = localStorage.getItem("currentUser");
 
@@ -20,6 +22,7 @@ let balance = Number(localStorage.getItem("balance")) || 0;
 function saveData() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
   localStorage.setItem("balance", balance);
+  localStorage.setItem("services", JSON.stringify(services));
 }
 
 //////////////////////////////////////////////////
