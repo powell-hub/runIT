@@ -16,24 +16,23 @@ function postTask() {
   const amount = document.getElementById("amountInput").value;
 
   if (!text || !amount) {
-    alert("Fill all fields");
+    showPopup("Fill all fields");
     return;
   }
 
- const task = {
-  text: text,
-  amount: Number(amount),
-  status: "pending",
-  owner: "poster",   // temporary user
-  worker: null
-};
-  
+  const task = {
+    text: text,
+    amount: Number(amount),
+    status: "pending",
+    owner: "poster",
+    worker: null
+  };
+
   tasks.push(task);
   saveData();
 
   showPopup("Task posted successfully!");
-  
-  // Clear inputs
+
   document.getElementById("taskInput").value = "";
   document.getElementById("amountInput").value = "";
 }
@@ -58,10 +57,11 @@ function displayTasks() {
     // FIX OLD TASKS
     if (!task.status) {
       task.status = "pending";
-      task.owner = "user1";
+      task.owner = "poster";
       task.worker = null;
     }
 
+    // PENDING TASK
     if (task.status === "pending") {
       taskList.innerHTML += `
         <div class="task">
@@ -72,53 +72,90 @@ function displayTasks() {
       `;
     }
 
+    // ACCEPTED TASK (ONLY SHOW BUTTON FOR WORKER)
     if (task.status === "accepted") {
+      if (task.worker === "worker") {
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>In Progress...</small><br><br>
+            <button onclick="completeTask(${index})">Mark as Done</button>
+          </div>
+        `;
+      } else {
+        taskList.innerHTML += `
+          <div class="task" style="opacity:0.6;">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>In Progress...</small>
+          </div>
+        `;
+      }
+    }
+
+    // COMPLETED TASK
+    if (task.status === "completed") {
       taskList.innerHTML += `
-        <div class="task" style="opacity:0.6;">
+        <div class="task" style="opacity:0.5;">
           <p>${task.text}</p>
           <strong>₦${task.amount}</strong><br>
-          <small>In Progress...</small>
+          <small>Completed ✅</small>
         </div>
       `;
     }
 
   });
 }
+
 //////////////////////////////////////////////////
-// ACCEPT TASK (EARN MONEY)
+// ACCEPT TASK
 //////////////////////////////////////////////////
 function acceptTask(index) {
   const task = tasks[index];
 
-  // Prevent accepting your own task
-  if (task.owner === "user1") {
-    showPopup("You cannot accept your own task");
- return;
-  }
-
-  // Prevent re-accepting
   if (task.status !== "pending") {
     showPopup("Task already taken");
     return;
   }
 
-  // Update task instead of deleting
   task.status = "accepted";
   task.worker = "worker";
 
-  // Earnings
+  saveData();
+
+  showPopup("Task accepted!");
+
+  displayTasks();
+}
+
+//////////////////////////////////////////////////
+// COMPLETE TASK
+//////////////////////////////////////////////////
+function completeTask(index) {
+  const task = tasks[index];
+
+  if (task.worker !== "worker") {
+    showPopup("Not your task");
+    return;
+  }
+
+  task.status = "completed";
+
+  // PAY ONLY AFTER COMPLETION
   const earnings = Math.floor(task.amount * 0.9);
   balance += earnings;
 
   saveData();
 
-  showPopup("Task accepted! Earned ₦" + earnings);
+  showPopup("Task completed! Earned ₦" + earnings);
 
   displayTasks();
   updateWallet();
 }
+
 //////////////////////////////////////////////////
-// UPDATE WALLET DISPLAY
+// UPDATE WALLET
 //////////////////////////////////////////////////
 function updateWallet() {
   const walletEl = document.getElementById("balance");
@@ -129,27 +166,26 @@ function updateWallet() {
 }
 
 //////////////////////////////////////////////////
-// WITHDRAW FUNCTION
+// WITHDRAW
 //////////////////////////////////////////////////
 function withdraw() {
   if (balance < 1000) {
-    alert("Minimum withdrawal is ₦1000");
+    showPopup("Minimum withdrawal is ₦1000");
     return;
   }
-
-  alert("Withdrawal successful!");
 
   balance = 0;
 
   saveData();
   updateWallet();
+
+  showPopup("Withdrawal successful!");
 }
 
 //////////////////////////////////////////////////
-// RUN ON PAGE LOAD
+// POPUP SYSTEM
 //////////////////////////////////////////////////
-
-  function showPopup(message) {
+function showPopup(message) {
   const popup = document.getElementById("popup");
 
   if (!popup) return;
@@ -161,6 +197,10 @@ function withdraw() {
     popup.style.display = "none";
   }, 2000);
 }
+
+//////////////////////////////////////////////////
+// ON LOAD
+//////////////////////////////////////////////////
 window.onload = function () {
   displayTasks();
   updateWallet();
