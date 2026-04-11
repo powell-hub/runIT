@@ -1,6 +1,11 @@
 // USER SYSTEM
 let currentUser = localStorage.getItem("currentUser");
 
+// ONLY redirect if NOT on login page
+if (!currentUser && !window.location.pathname.includes("login.html")) {
+  window.location.href = "login.html";
+}
+
 function login(username) {
   localStorage.setItem("currentUser", username);
   location.reload();
