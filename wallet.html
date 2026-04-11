@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Wallet</title>
+  <title>Wallet - RunIT</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -9,18 +9,29 @@
 
 <div class="app">
 
-  <h2>Wallet</h2>
+  <h2>💳 Wallet</h2>
 
-  <h1>₦<span id="balance">0</span></h1>
+  <!-- BALANCE DISPLAY -->
+  <div style="margin:20px; padding:20px; border:1px solid white;">
+    <p>Your Balance</p>
+    <h1>₦<span id="balance">0</span></h1>
+  </div>
 
-  <button onclick="withdraw()">Withdraw</button>
+  <!-- WITHDRAW BUTTON -->
+  <button onclick="withdraw()" style="padding:10px 20px;">
+    Withdraw Money
+  </button>
 
   <br><br>
 
-  <button onclick="location.href='index.html'">Back</button>
+  <!-- BACK BUTTON -->
+  <button onclick="location.href='index.html'">
+    Back
+  </button>
 
 </div>
 
+<!-- VERY IMPORTANT: SCRIPT MUST BE HERE -->
 <script src="script.js"></script>
 
 </body>
