@@ -286,8 +286,8 @@ window.onload = function () {
   displayTasks();
   updateWallet();
   displayServices();
-};
-function setGreeting() {
+  setGreeting();
+};function setGreeting() {
   const el = document.getElementById("greeting");
   if (!el) return;
 
