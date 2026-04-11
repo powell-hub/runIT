@@ -52,39 +52,38 @@ function displayTasks() {
     taskList.innerHTML = "<p>No tasks available</p>";
     return;
   }
-tasks.forEach((task, index) => {
 
-  // FIX OLD TASKS
-  if (!task.status) {
-    task.status = "pending";
-    task.owner = "user1";
-    task.worker = null;
-  }
   tasks.forEach((task, index) => {
 
-  if (task.status === "pending") {
-    taskList.innerHTML += `
-      <div class="task">
-        <p>${task.text}</p>
-        <strong>₦${task.amount}</strong><br><br>
-        <button onclick="acceptTask(${index})">Accept</button>
-      </div>
-    `;
-  }
+    // FIX OLD TASKS
+    if (!task.status) {
+      task.status = "pending";
+      task.owner = "user1";
+      task.worker = null;
+    }
 
-  if (task.status === "accepted") {
-    taskList.innerHTML += `
-      <div class="task" style="opacity:0.6;">
-        <p>${task.text}</p>
-        <strong>₦${task.amount}</strong><br>
-        <small>In Progress...</small>
-      </div>
-    `;
-  }
+    if (task.status === "pending") {
+      taskList.innerHTML += `
+        <div class="task">
+          <p>${task.text}</p>
+          <strong>₦${task.amount}</strong><br><br>
+          <button onclick="acceptTask(${index})">Accept</button>
+        </div>
+      `;
+    }
 
-});
+    if (task.status === "accepted") {
+      taskList.innerHTML += `
+        <div class="task" style="opacity:0.6;">
+          <p>${task.text}</p>
+          <strong>₦${task.amount}</strong><br>
+          <small>In Progress...</small>
+        </div>
+      `;
+    }
+
+  });
 }
-
 //////////////////////////////////////////////////
 // ACCEPT TASK (EARN MONEY)
 //////////////////////////////////////////////////
