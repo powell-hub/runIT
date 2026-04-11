@@ -149,6 +149,19 @@ function withdraw() {
 //////////////////////////////////////////////////
 // RUN ON PAGE LOAD
 //////////////////////////////////////////////////
+
+  function showPopup(message) {
+  const popup = document.getElementById("popup");
+
+  if (!popup) return;
+
+  popup.innerText = message;
+  popup.style.display = "block";
+
+  setTimeout(() => {
+    popup.style.display = "none";
+  }, 2000);
+}
 window.onload = function () {
   displayTasks();
   updateWallet();
