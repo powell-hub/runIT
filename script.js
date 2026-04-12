@@ -6,7 +6,11 @@ let balances = JSON.parse(localStorage.getItem("balances")) || {};
 // USER SYSTEM
 let currentUser = localStorage.getItem("currentUser");
 
-if (!currentUser && !window.location.pathname.includes("login.html")) {
+const page = window.location.pathname;
+
+if (!currentUser &&
+    !page.includes("login.html") &&
+    !page.includes("signup.html")) {
   window.location.href = "login.html";
 }
 
