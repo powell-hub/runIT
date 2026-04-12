@@ -7,43 +7,6 @@
 
 <body>
 
-  <div id="popup" style="
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: black;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  display: none;
-  z-index: 9999;
-"></div>
-  
-<div class="app">
-
-  <!-- HEADER -->
-  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
-   <div id="greeting">RunIT</div>
-
-    <button onclick="logout()" 
-      style="padding:6px 10px; border:none; border-radius:6px; background:#ff4d4d; color:white;">
-      Logout
-    </button>
-  </div>
-
-  <!-- WALLET -->
-  <div class="card">
-    <h3>Wallet Balance</h3>
-    <h1>₦<span id="balance">0</span></h1>
-  </div>
-
-  <!-- NAV BUTTONS -->
-  <div class="card">
-    <button onclick="location.href='tasks.html'" class="main-btn">📋 Tasks</button><br><br>
-    <button onclick="location.href='services.html'" class="main-btn">🛠 Services</button>
-  </div>
-
   <!-- POPUP -->
   <div id="popup" style="
     position: fixed;
@@ -55,12 +18,47 @@
     padding: 12px 20px;
     border-radius: 10px;
     display: none;
-    z-index: 999;
+    z-index: 9999;
   "></div>
 
-</div>
+  <div class="app">
 
-<script src="script.js"></script>
+    <!-- HEADER -->
+    <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+      <div id="greeting">RunIT</div>
+
+      <button onclick="logout()" 
+        style="padding:6px 10px; border:none; border-radius:6px; background:#ff4d4d; color:white;">
+        Logout
+      </button>
+    </div>
+
+    <!-- WALLET -->
+    <div class="card">
+      <h3>Wallet Balance</h3>
+      <h1>₦<span id="balance">0</span></h1>
+    </div>
+
+    <!-- DASHBOARD (THIS IS WHERE YOUR SECOND CODE GOES) -->
+    <div class="dashboard">
+
+      <div onclick="location.href='post.html'" class="card">
+        📌 Post Task
+      </div>
+
+      <div onclick="location.href='tasks.html'" class="card">
+        📋 Available Tasks
+      </div>
+
+      <div onclick="location.href='services.html'" class="card">
+        🛠 Services
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
 
 </body>
 </html>
