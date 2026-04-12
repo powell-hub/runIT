@@ -32,8 +32,8 @@ function updateBalance(user, amount) {
 function saveData() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
   localStorage.setItem("services", JSON.stringify(services));
-  localStorage.setItem("balances", JSON.stringify(balances));
-}
+  localStorage.setItem("balance", balance);
+}}
 
 //////////////////////////////////////////////////
 // POST TASK
