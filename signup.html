@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  
   <title>Sign Up - RunIT</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -10,33 +9,18 @@
 
 <div class="app">
 
-  <!-- HEADER -->
   <div class="header">
     <div>RunIT</div>
   </div>
 
-  <!-- TITLE -->
   <h2 style="text-align:center; margin-top:10px;">Create Account 🚀</h2>
 
-  <!-- FORM -->
   <div class="card">
 
     <input id="username" placeholder="Full Name"
       style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
-    <input id="email" placeholder="School Email"
-      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
-
-    <input id="phone" placeholder="Phone Number"
-      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
-
-    <input id="level" placeholder="Level (e.g 300)"
-      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
-
-    <input id="department" placeholder="Department"
-      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
-
-    <input id="hostel" placeholder="Hostel"
+    <input id="email" placeholder="Email"
       style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
     <input id="password" type="password" placeholder="Password"
@@ -44,18 +28,13 @@
 
   </div>
 
-  <!-- BUTTON -->
   <button class="main-btn" onclick="signup()">Create Account</button>
 
-  <!-- ✅ FIXED LOGIN LINK -->
   <p style="text-align:center; margin-top:15px;">
     Already have an account?
-    <a href="login.html" style="color:#6c4cff; font-weight:600;">
-      Login
-    </a>
+    <a href="login.html" style="color:#6c4cff; font-weight:600;">Login</a>
   </p>
 
-  <!-- POPUP -->
   <div id="popup" style="
     display:none;
     position:fixed;
@@ -70,55 +49,42 @@
 
 </div>
 
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <script src="firebase.js"></script>
-<script src="script.js"></script>
-  
 <script src="script.js"></script>
 
 <script>
 function signup() {
   const username = document.getElementById("username").value.trim();
   const email = document.getElementById("email").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const level = document.getElementById("level").value.trim();
-  const department = document.getElementById("department").value.trim();
-  const hostel = document.getElementById("hostel").value.trim();
   const password = document.getElementById("password").value.trim();
 
-  if (!username || !email || !phone || !level || !department || !hostel || !password) {
+  if (!username || !email || !password) {
     showPopup("Fill all fields");
     return;
   }
 
-  let users = JSON.parse(localStorage.getItem("users")) || [];
+  auth.createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
 
-  const exists = users.find(u => u.username === username);
+      // OPTIONAL: store display name
+      userCredential.user.updateProfile({
+        displayName: username
+      });
 
-  if (exists) {
-    showPopup("Username already exists");
-    return;
-  }
+      showPopup("Account created!");
 
-  users.push({
-    username,
-    email,
-    phone,
-    level,
-    department,
-    hostel,
-    password
-  });
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1000);
 
-  localStorage.setItem("users", JSON.stringify(users));
-
-  showPopup("Account created!");
-
-  setTimeout(() => {
-    window.location.href = "login.html";
-  }, 1000);
+    })
+    .catch((error) => {
+      showPopup(error.message);
+    });
 }
 </script>
 
