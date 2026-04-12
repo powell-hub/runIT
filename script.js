@@ -1,32 +1,67 @@
-// LOAD DATA
+// ===============================
+// FIREBASE AUTH GUARD
+// ===============================
+firebase.auth().onAuthStateChanged(user => {
+  const page = window.location.pathname;
+
+  if (!user &&
+      !page.includes("login.html") &&
+      !page.includes("signup.html")) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (user) {
+    window.currentUser = user.email;
+    initApp();
+  }
+});
+
+
+// ===============================
+// APP DATA (NO MORE LOCALSTORAGE USERS)
+// ===============================
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let services = JSON.parse(localStorage.getItem("services")) || [];
 let balances = JSON.parse(localStorage.getItem("balances")) || {};
 
-// USER SYSTEM
-let currentUser = localStorage.getItem("currentUser");
+let currentUser = null;
 
-const page = window.location.pathname;
 
-if (!currentUser &&
-    !page.includes("login.html") &&
-    !page.includes("signup.html")) {
-  window.location.href = "login.html";
+// ===============================
+// INIT APP (ONLY AFTER LOGIN)
+// ===============================
+function initApp() {
+  displayTasks();
+  updateWallet();
+  displayServices();
+  setGreeting();
 }
 
+
+// ===============================
+// LOGOUT
+// ===============================
 function logout() {
-  localStorage.removeItem("currentUser");
-  window.location.href = "login.html";
+  firebase.auth().signOut().then(() => {
+    window.location.href = "login.html";
+  });
 }
 
+
+// ===============================
 // SAVE DATA
+// ===============================
 function saveData() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
   localStorage.setItem("services", JSON.stringify(services));
   localStorage.setItem("balances", JSON.stringify(balances));
 }
 
+
+// ===============================
 // BALANCE HELPERS
+// ===============================
 function getBalance(user) {
   if (!balances[user]) balances[user] = 0;
   return balances[user];
@@ -38,9 +73,10 @@ function updateBalance(user, amount) {
   saveData();
 }
 
-//////////////////////////////////////////////////
+
+// ===============================
 // POST TASK
-//////////////////////////////////////////////////
+// ===============================
 function postTask() {
   const text = document.getElementById("taskInput");
   const amount = document.getElementById("amountInput");
@@ -67,9 +103,10 @@ function postTask() {
   amount.value = "";
 }
 
-//////////////////////////////////////////////////
+
+// ===============================
 // DISPLAY TASKS
-//////////////////////////////////////////////////
+// ===============================
 function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
@@ -78,7 +115,6 @@ function displayTasks() {
 
   tasks.forEach((task, index) => {
 
-    // 🟡 PENDING
     if (task.status === "pending") {
       taskList.innerHTML += `
         <div class="task">
@@ -90,7 +126,6 @@ function displayTasks() {
       `;
     }
 
-    // 🔵 ACCEPTED (WORKER WORKING)
     if (task.status === "accepted") {
       if (task.worker === currentUser) {
         taskList.innerHTML += `
@@ -112,7 +147,6 @@ function displayTasks() {
       }
     }
 
-    // 🟠 SUBMITTED (WAITING FOR POSTER)
     if (task.status === "submitted") {
       if (task.owner === currentUser) {
         taskList.innerHTML += `
@@ -134,7 +168,6 @@ function displayTasks() {
       }
     }
 
-    // 🟢 COMPLETED
     if (task.status === "completed") {
       taskList.innerHTML += `
         <div class="task" style="opacity:0.5;">
@@ -146,9 +179,12 @@ function displayTasks() {
     }
 
   });
-}//////////////////////////////////////////////////
-// ACCEPT TASK
-//////////////////////////////////////////////////
+}
+
+
+// ===============================
+// TASK ACTIONS
+// ===============================
 function acceptTask(index) {
   const task = tasks[index];
 
@@ -162,13 +198,9 @@ function acceptTask(index) {
 
   saveData();
   showPopup("Task accepted!");
-
   displayTasks();
 }
 
-//////////////////////////////////////////////////
-// SUBMIT TASK
-//////////////////////////////////////////////////
 function submitTask(index) {
   const task = tasks[index];
 
@@ -181,13 +213,9 @@ function submitTask(index) {
 
   saveData();
   showPopup("Task submitted");
-
   displayTasks();
 }
 
-//////////////////////////////////////////////////
-// APPROVE TASK
-//////////////////////////////////////////////////
 function approveTask(index) {
   const task = tasks[index];
 
@@ -210,12 +238,13 @@ function approveTask(index) {
   updateWallet();
 }
 
-//////////////////////////////////////////////////
+
+// ===============================
 // WALLET
-//////////////////////////////////////////////////
+// ===============================
 function updateWallet() {
   const el = document.getElementById("balance");
-  if (el) el.innerText = getBalance(currentUser);
+  if (el && currentUser) el.innerText = getBalance(currentUser);
 }
 
 function withdraw() {
@@ -231,24 +260,10 @@ function withdraw() {
   showPopup("Withdrawal successful!");
 }
 
-//////////////////////////////////////////////////
-// POPUP
-//////////////////////////////////////////////////
-function showPopup(message) {
-  const popup = document.getElementById("popup");
-  if (!popup) return;
 
-  popup.innerText = message;
-  popup.style.display = "block";
-
-  setTimeout(() => {
-    popup.style.display = "none";
-  }, 2000);
-}
-
-//////////////////////////////////////////////////
+// ===============================
 // SERVICES
-//////////////////////////////////////////////////
+// ===============================
 function addService() {
   const name = document.getElementById("serviceName");
   const desc = document.getElementById("serviceDesc");
@@ -289,21 +304,29 @@ function displayServices() {
   });
 }
 
-//////////////////////////////////////////////////
-// LOAD
-//////////////////////////////////////////////////
-window.onload = function () {
-  if (!currentUser) return;
 
-  displayTasks();
-  updateWallet();
-  displayServices();
-  setGreeting();
-};
+// ===============================
+// POPUP
+// ===============================
+function showPopup(message) {
+  const popup = document.getElementById("popup");
+  if (!popup) return;
 
+  popup.innerText = message;
+  popup.style.display = "block";
+
+  setTimeout(() => {
+    popup.style.display = "none";
+  }, 2000);
+}
+
+
+// ===============================
+// GREETING
+// ===============================
 function setGreeting() {
   const el = document.getElementById("greeting");
-  if (!el) return;
+  if (!el || !currentUser) return;
 
   el.innerText = "Hello " + currentUser;
 }
