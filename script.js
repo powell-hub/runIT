@@ -293,6 +293,8 @@ function displayServices() {
 // LOAD
 //////////////////////////////////////////////////
 window.onload = function () {
+  if (!currentUser) return;
+
   displayTasks();
   updateWallet();
   displayServices();
