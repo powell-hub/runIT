@@ -19,15 +19,32 @@
 
   <!-- FORM -->
   <div class="card">
-    <input id="username" placeholder="Username"
+
+    <input id="username" placeholder="Full Name"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="email" placeholder="School Email"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="phone" placeholder="Phone Number"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="level" placeholder="Level (e.g 300)"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="department" placeholder="Department"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="hostel" placeholder="Hostel"
       style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
     <input id="password" type="password" placeholder="Password"
       style="width:100%; padding:12px; border-radius:8px; border:1px solid #ccc;">
+
   </div>
 
   <!-- BUTTON -->
-  <button class="main-btn" onclick="signup()">Sign Up</button>
+  <button class="main-btn" onclick="signup()">Create Account</button>
 
   <!-- LOGIN LINK -->
   <p style="text-align:center; margin-top:15px;">
@@ -57,18 +74,23 @@
 
 <script>
 function signup() {
-  const user = document.getElementById("username").value.trim();
-  const pass = document.getElementById("password").value.trim();
+  const username = document.getElementById("username").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const level = document.getElementById("level").value.trim();
+  const department = document.getElementById("department").value.trim();
+  const hostel = document.getElementById("hostel").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-  if (!user || !pass) {
+  if (!username || !email || !phone || !level || !department || !hostel || !password) {
     showPopup("Fill all fields");
     return;
   }
 
   let users = JSON.parse(localStorage.getItem("users")) || [];
 
-  // 🚨 CHECK IF USER EXISTS
-  const exists = users.find(u => u.username === user);
+  // CHECK DUPLICATE
+  const exists = users.find(u => u.username === username);
 
   if (exists) {
     showPopup("Username already exists");
@@ -77,8 +99,13 @@ function signup() {
 
   // SAVE USER
   users.push({
-    username: user,
-    password: pass
+    username,
+    email,
+    phone,
+    level,
+    department,
+    hostel,
+    password
   });
 
   localStorage.setItem("users", JSON.stringify(users));
