@@ -227,9 +227,8 @@ function showPopup(message) {
 function addService() {
   const name = document.getElementById("serviceName").value;
   const desc = document.getElementById("serviceDesc").value;
-  const phone = document.getElementById("servicePhone").value;
 
-  if (!name || !desc || !phone) {
+  if (!name || !desc) {
     showPopup("Fill all fields");
     return;
   }
@@ -237,7 +236,6 @@ function addService() {
   const service = {
     name,
     desc,
-    phone,
     owner: currentUser
   };
 
@@ -248,7 +246,6 @@ function addService() {
 
   document.getElementById("serviceName").value = "";
   document.getElementById("serviceDesc").value = "";
-  document.getElementById("servicePhone").value = "";
 }
 
 function displayServices() {
@@ -257,17 +254,11 @@ function displayServices() {
 
   list.innerHTML = "";
 
-  if (services.length === 0) {
-    list.innerHTML = "<p>No services available</p>";
-    return;
-  }
-
   services.forEach(service => {
     list.innerHTML += `
       <div class="task">
-        <h3>${service.name}</h3>
+        <p><strong>${service.name}</strong></p>
         <p>${service.desc}</p>
-        <strong>Contact: ${service.phone}</strong><br>
         <small>By ${service.owner}</small>
       </div>
     `;
