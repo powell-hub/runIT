@@ -46,13 +46,12 @@
   <!-- BUTTON -->
   <button class="main-btn" onclick="signup()">Create Account</button>
 
-  <!-- LOGIN LINK -->
+  <!-- ✅ FIXED LOGIN LINK -->
   <p style="text-align:center; margin-top:15px;">
     Already have an account?
-    <span onclick="location.href='login.html'"
-      style="color:#6c4cff; cursor:pointer; font-weight:600;">
+    <a href="login.html" style="color:#6c4cff; font-weight:600;">
       Login
-    </span>
+    </a>
   </p>
 
   <!-- POPUP -->
@@ -89,7 +88,6 @@ function signup() {
 
   let users = JSON.parse(localStorage.getItem("users")) || [];
 
-  // CHECK DUPLICATE
   const exists = users.find(u => u.username === username);
 
   if (exists) {
@@ -97,7 +95,6 @@ function signup() {
     return;
   }
 
-  // SAVE USER
   users.push({
     username,
     email,
