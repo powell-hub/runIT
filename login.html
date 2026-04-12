@@ -9,16 +9,44 @@
 
 <div class="app">
 
-  <div class="header">Login</div>
-
-  <div class="card">
-    <input id="username" placeholder="Username" style="width:100%; padding:10px;"><br><br>
-    <input id="password" type="password" placeholder="Password" style="width:100%; padding:10px;">
+  <!-- HEADER -->
+  <div class="header">
+    <div>RunIT</div>
   </div>
 
+  <!-- GREETING -->
+  <h2 style="text-align:center; margin-top:10px;">Welcome Back 👋</h2>
+
+  <!-- FORM -->
+  <div class="card">
+    <input id="username" placeholder="Username" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+    
+    <input id="password" type="password" placeholder="Password" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ccc;">
+  </div>
+
+  <!-- LOGIN BUTTON -->
   <button class="main-btn" onclick="handleLogin()">Login</button>
 
-  <p onclick="location.href='signup.html'">No account? Sign up</p>
+  <!-- SIGNUP LINK -->
+  <p style="text-align:center; margin-top:15px;">
+    No account?
+    <span onclick="location.href='signup.html'" style="color:#6c4cff; cursor:pointer; font-weight:600;">
+      Sign up
+    </span>
+  </p>
+
+  <!-- POPUP -->
+  <div id="popup" style="
+    display:none;
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:black;
+    color:white;
+    padding:10px 20px;
+    border-radius:8px;
+  "></div>
 
 </div>
 
@@ -26,8 +54,8 @@
 
 <script>
 function handleLogin() {
-  const user = document.getElementById("username").value;
-  const pass = document.getElementById("password").value;
+  const user = document.getElementById("username").value.trim();
+  const pass = document.getElementById("password").value.trim();
 
   if (!user || !pass) {
     showPopup("Fill all fields");
@@ -45,7 +73,11 @@ function handleLogin() {
 
   localStorage.setItem("currentUser", user);
 
-  location.href = "index.html";
+  showPopup("Login successful");
+
+  setTimeout(() => {
+    window.location.href = "index.html";
+  }, 1000);
 }
 </script>
 
