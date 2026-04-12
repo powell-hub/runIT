@@ -74,36 +74,63 @@ function displayTasks() {
 
   tasks.forEach((task, index) => {
 
+    // 🟡 PENDING
     if (task.status === "pending") {
       taskList.innerHTML += `
         <div class="task">
           <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br><br>
+          <strong>₦${task.amount}</strong><br>
+          <small>Available</small><br><br>
           <button onclick="acceptTask(${index})">Accept</button>
         </div>
       `;
     }
 
-    if (task.status === "accepted" && task.worker === currentUser) {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br><br>
-          <button onclick="submitTask(${index})">Mark as Done</button>
-        </div>
-      `;
+    // 🔵 ACCEPTED (WORKER WORKING)
+    if (task.status === "accepted") {
+      if (task.worker === currentUser) {
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>In Progress...</small><br><br>
+            <button onclick="submitTask(${index})">Submit Work</button>
+          </div>
+        `;
+      } else {
+        taskList.innerHTML += `
+          <div class="task" style="opacity:0.6;">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>Someone is working on this</small>
+          </div>
+        `;
+      }
     }
 
-    if (task.status === "submitted" && task.owner === currentUser) {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br><br>
-          <button onclick="approveTask(${index})">Confirm & Pay</button>
-        </div>
-      `;
+    // 🟠 SUBMITTED (WAITING FOR POSTER)
+    if (task.status === "submitted") {
+      if (task.owner === currentUser) {
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>Pending your approval</small><br><br>
+            <button onclick="approveTask(${index})">Approve & Pay</button>
+          </div>
+        `;
+      } else {
+        taskList.innerHTML += `
+          <div class="task" style="opacity:0.6;">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>Waiting for approval...</small>
+          </div>
+        `;
+      }
     }
 
+    // 🟢 COMPLETED
     if (task.status === "completed") {
       taskList.innerHTML += `
         <div class="task" style="opacity:0.5;">
@@ -115,9 +142,7 @@ function displayTasks() {
     }
 
   });
-}
-
-//////////////////////////////////////////////////
+}//////////////////////////////////////////////////
 // ACCEPT TASK
 //////////////////////////////////////////////////
 function acceptTask(index) {
