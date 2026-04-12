@@ -1,6 +1,7 @@
+// LOAD DATA
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let services = JSON.parse(localStorage.getItem("services")) || [];
-let balance = Number(localStorage.getItem("balance")) || 0;
+let balances = JSON.parse(localStorage.getItem("balances")) || {};
 
 // USER SYSTEM
 let currentUser = localStorage.getItem("currentUser");
@@ -14,9 +15,14 @@ function logout() {
   window.location.href = "login.html";
 }
 
-// PER-USER WALLET (NEW FIX)
-let balances = JSON.parse(localStorage.getItem("balances")) || {};
+// SAVE DATA
+function saveData() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem("services", JSON.stringify(services));
+  localStorage.setItem("balances", JSON.stringify(balances));
+}
 
+// BALANCE HELPERS
 function getBalance(user) {
   if (!balances[user]) balances[user] = 0;
   return balances[user];
@@ -25,31 +31,24 @@ function getBalance(user) {
 function updateBalance(user, amount) {
   if (!balances[user]) balances[user] = 0;
   balances[user] += amount;
-  localStorage.setItem("balances", JSON.stringify(balances));
+  saveData();
 }
-
-// SAVE DATA
-function saveData() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("services", JSON.stringify(services));
-  localStorage.setItem("balance", balance);
-}}
 
 //////////////////////////////////////////////////
 // POST TASK
 //////////////////////////////////////////////////
 function postTask() {
-  const text = document.getElementById("taskInput").value;
-  const amount = document.getElementById("amountInput").value;
+  const text = document.getElementById("taskInput");
+  const amount = document.getElementById("amountInput");
 
-  if (!text || !amount) {
+  if (!text || !amount || !text.value || !amount.value) {
     showPopup("Fill all fields");
     return;
   }
 
   const task = {
-    text,
-    amount: Number(amount),
+    text: text.value,
+    amount: Number(amount.value),
     status: "pending",
     owner: currentUser,
     worker: null
@@ -60,8 +59,8 @@ function postTask() {
 
   showPopup("Task posted!");
 
-  document.getElementById("taskInput").value = "";
-  document.getElementById("amountInput").value = "";
+  text.value = "";
+  amount.value = "";
 }
 
 //////////////////////////////////////////////////
@@ -85,28 +84,24 @@ function displayTasks() {
       `;
     }
 
-    if (task.status === "accepted") {
-      if (task.worker === currentUser) {
-        taskList.innerHTML += `
-          <div class="task">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <button onclick="submitTask(${index})">Mark as Done</button>
-          </div>
-        `;
-      }
+    if (task.status === "accepted" && task.worker === currentUser) {
+      taskList.innerHTML += `
+        <div class="task">
+          <p>${task.text}</p>
+          <strong>₦${task.amount}</strong><br><br>
+          <button onclick="submitTask(${index})">Mark as Done</button>
+        </div>
+      `;
     }
 
-    if (task.status === "submitted") {
-      if (task.owner === currentUser) {
-        taskList.innerHTML += `
-          <div class="task">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <button onclick="approveTask(${index})">Confirm & Pay</button>
-          </div>
-        `;
-      }
+    if (task.status === "submitted" && task.owner === currentUser) {
+      taskList.innerHTML += `
+        <div class="task">
+          <p>${task.text}</p>
+          <strong>₦${task.amount}</strong><br><br>
+          <button onclick="approveTask(${index})">Confirm & Pay</button>
+        </div>
+      `;
     }
 
     if (task.status === "completed") {
@@ -118,6 +113,7 @@ function displayTasks() {
         </div>
       `;
     }
+
   });
 }
 
@@ -161,7 +157,7 @@ function submitTask(index) {
 }
 
 //////////////////////////////////////////////////
-// APPROVE TASK (PAYMENT SYSTEM FIXED)
+// APPROVE TASK
 //////////////////////////////////////////////////
 function approveTask(index) {
   const task = tasks[index];
@@ -175,7 +171,7 @@ function approveTask(index) {
 
   const earnings = Math.floor(task.amount * 0.9);
 
-  updateBalance(task.worker, earnings); // 👈 PAY WORKER ONLY
+  updateBalance(task.worker, earnings);
 
   saveData();
 
@@ -186,7 +182,7 @@ function approveTask(index) {
 }
 
 //////////////////////////////////////////////////
-// WALLET (PER USER FIXED)
+// WALLET
 //////////////////////////////////////////////////
 function updateWallet() {
   const el = document.getElementById("balance");
@@ -207,7 +203,7 @@ function withdraw() {
 }
 
 //////////////////////////////////////////////////
-// POPUP SYSTEM (ONLY FEEDBACK METHOD)
+// POPUP
 //////////////////////////////////////////////////
 function showPopup(message) {
   const popup = document.getElementById("popup");
@@ -225,27 +221,26 @@ function showPopup(message) {
 // SERVICES
 //////////////////////////////////////////////////
 function addService() {
-  const name = document.getElementById("serviceName").value;
-  const desc = document.getElementById("serviceDesc").value;
+  const name = document.getElementById("serviceName");
+  const desc = document.getElementById("serviceDesc");
 
-  if (!name || !desc) {
+  if (!name || !desc || !name.value || !desc.value) {
     showPopup("Fill all fields");
     return;
   }
 
-  const service = {
-    name,
-    desc,
+  services.push({
+    name: name.value,
+    desc: desc.value,
     owner: currentUser
-  };
+  });
 
-  services.push(service);
   saveData();
 
   showPopup("Service added!");
 
-  document.getElementById("serviceName").value = "";
-  document.getElementById("serviceDesc").value = "";
+  name.value = "";
+  desc.value = "";
 }
 
 function displayServices() {
@@ -264,6 +259,7 @@ function displayServices() {
     `;
   });
 }
+
 //////////////////////////////////////////////////
 // LOAD
 //////////////////////////////////////////////////
