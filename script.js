@@ -58,9 +58,13 @@ function initApp() {
 // LOGOUT
 // ===============================
 function logout() {
-  firebase.auth().signOut().then(() => {
-    window.location.href = "login.html";
-  });
+  firebase.auth().signOut()
+    .then(() => {
+      window.location.href = "login.html";
+    })
+    .catch((error) => {
+      alert(error.message);
+    });
 }
 
 // ===============================
