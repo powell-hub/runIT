@@ -1,9 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sign Up - RunIT</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <div>RunIT</div>
+  </div>
+
+  <h2 style="text-align:center; margin-top:10px;">Create Account 🚀</h2>
+
+  <div class="card">
+
+    <input id="username" placeholder="Full Name"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="email" placeholder="Email"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="password" type="password" placeholder="Password"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="hostel" placeholder="Hostel"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="level" placeholder="Level (e.g. 100, 200)"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="department" placeholder="Department"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="phone" placeholder="Phone Number"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+  </div>
+
+  <button class="main-btn" onclick="signup()">Create Account</button>
+
+  <p style="text-align:center; margin-top:15px;">
+    Already have an account?
+    <a href="login.html" style="color:#6c4cff; font-weight:600;">Login</a>
+  </p>
+
+  <div id="popup" style="
+    display:none;
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:black;
+    color:white;
+    padding:10px 20px;
+    border-radius:8px;
+  "></div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script src="firebase.js"></script>
+
+<script>
+function showPopup(message) {
+  const popup = document.getElementById("popup");
+  popup.innerText = message;
+  popup.style.display = "block";
+
+  setTimeout(() => {
+    popup.style.display = "none";
+  }, 2000);
+}
+
+// SIGNUP (FULL PROFILE SYSTEM)
 function signup() {
   const username = document.getElementById("username").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
+  const hostel = document.getElementById("hostel").value.trim();
+  const level = document.getElementById("level").value.trim();
+  const department = document.getElementById("department").value.trim();
+  const phone = document.getElementById("phone").value.trim();
 
-  if (!username || !email || !password) {
+  if (!username || !email || !password || !hostel || !level || !department || !phone) {
     showPopup("Fill all fields");
     return;
   }
@@ -13,12 +99,18 @@ function signup() {
 
       const user = userCredential.user;
 
+      // SAVE FULL PROFILE IN FIRESTORE
       await firebase.firestore().collection("users").doc(user.uid).set({
         username,
         email,
+        hostel,
+        level,
+        department,
+        phone,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
+      // SAVE DISPLAY NAME IN AUTH
       await user.updateProfile({
         displayName: username
       });
@@ -34,3 +126,7 @@ function signup() {
       showPopup(error.message);
     });
 }
+</script>
+
+</body>
+</html>
