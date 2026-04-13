@@ -130,13 +130,32 @@ function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
 
-  loadData(); // always sync latest
+  firebase.firestore().collection("tasks")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
 
-  taskList.innerHTML = "";
+      taskList.innerHTML = "";
 
-  tasks.forEach((task, index) => {
+      snapshot.forEach(doc => {
+        const task = doc.data();
+        const id = doc.id;
 
-    const status = (task.status || "pending").toLowerCase();
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>${task.status}</small><br><br>
+
+            <button onclick="acceptTask('${id}')">Accept</button>
+            <button onclick="submitTask('${id}')">Submit</button>
+            <button onclick="releaseEscrow('${id}', '${task.ownerId}', '${task.workerId}', ${task.amount})">
+              Release
+            </button>
+          </div>
+        `;
+      });
+    });
+}
 
     // =========================
     // PENDING TASKS
