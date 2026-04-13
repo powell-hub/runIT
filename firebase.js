@@ -9,3 +9,4 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
