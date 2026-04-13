@@ -1,4 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login - RunIT</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <div>RunIT</div>
+  </div>
+
+  <h2 style="text-align:center; margin-top:10px;">Welcome Back 👋</h2>
+
+  <div class="card">
+
+    <input id="email" placeholder="Email"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <input id="password" type="password" placeholder="Password"
+      style="width:100%; padding:12px; border-radius:8px; border:1px solid #ccc;">
+
+  </div>
+
+  <button class="main-btn" onclick="handleLogin()">Login</button>
+
+  <p style="text-align:center; margin-top:15px;">
+    No account?
+    <a href="signup.html" style="color:#6c4cff; font-weight:600;">Sign up</a>
+  </p>
+
+  <div id="popup" style="
+    display:none;
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:black;
+    color:white;
+    padding:10px 20px;
+    border-radius:8px;
+  "></div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script src="firebase.js"></script>
+
 <script>
+// POPUP
 function showPopup(message) {
   const popup = document.getElementById("popup");
   popup.innerText = message;
@@ -9,7 +65,7 @@ function showPopup(message) {
   }, 2000);
 }
 
-// LOGIN FUNCTION (FIXED)
+// LOGIN (FIXED + CONSISTENT WITH AUTH)
 function handleLogin() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
@@ -19,15 +75,10 @@ function handleLogin() {
     return;
   }
 
-  firebase.auth().signInWithEmailAndPassword(email, password)
+  auth.signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
 
-      const user = userCredential.user;
-
       showPopup("Login successful");
-
-      // optional: store session info
-      localStorage.setItem("userId", user.uid);
 
       setTimeout(() => {
         window.location.href = "index.html";
@@ -39,3 +90,6 @@ function handleLogin() {
     });
 }
 </script>
+
+</body>
+</html>
