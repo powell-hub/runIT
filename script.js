@@ -221,10 +221,14 @@ function displayTasks() {
 // ===============================
 // TASK ACTIONS (SYNC FIXED)
 // ===============================
+// =========================
+// ACCEPT TASK
+// =========================
 function acceptTask(index) {
   loadData();
 
   const task = tasks[index];
+  if (!task) return showPopup("Task not found");
 
   if (task.status !== "pending") {
     showPopup("Task already taken");
@@ -238,27 +242,38 @@ function acceptTask(index) {
   displayTasks();
 }
 
+
+// =========================
+// SUBMIT TASK (WORKER FINISHES)
+// =========================
 function submitTask(index) {
   loadData();
 
   const task = tasks[index];
+  if (!task) return showPopup("Task not found");
 
   if (task.worker !== currentUser) {
     showPopup("Not your task");
     return;
   }
 
-  // 🔥 NEW FLOW: goes to REVIEW instead of direct submit
-  task.status = "reviewed";
+  task.status = "reviewed"; // goes to OWNER
 
   saveData();
   displayTasks();
+
+  showPopup("Submitted for review");
 }
 
+
+// =========================
+// CONFIRM TASK (ESCROW RELEASE)
+// =========================
 function confirmTask(index) {
   loadData();
 
   const task = tasks[index];
+  if (!task) return showPopup("Task not found");
 
   if (task.owner !== currentUser) {
     showPopup("Not allowed");
@@ -279,16 +294,21 @@ function confirmTask(index) {
 
   saveData();
 
-  showPopup("Payment released ₦" + earnings);
+  showPopup("Paid ₦" + earnings);
 
   displayTasks();
   updateWallet();
 }
 
+
+// =========================
+// REJECT TASK (SEND BACK)
+// =========================
 function rejectTask(index) {
   loadData();
 
   const task = tasks[index];
+  if (!task) return showPopup("Task not found");
 
   if (task.owner !== currentUser) {
     showPopup("Not allowed");
@@ -300,16 +320,19 @@ function rejectTask(index) {
     return;
   }
 
-  task.status = "accepted"; // sends back to worker
+  task.status = "accepted"; // back to worker
 
   saveData();
   displayTasks();
 
-  showPopup("Task sent back to worker");
+  showPopup("Returned to worker");
 }
 
+
+// =========================
+// LEGACY SAFETY
+// =========================
 function approveTask(index) {
-  // optional legacy safety redirect
   confirmTask(index);
 }
 
