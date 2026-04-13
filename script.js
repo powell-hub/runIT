@@ -112,6 +112,8 @@ function postTask() {
 // ===============================
 // DISPLAY TASKS
 // ===============================
+console.log("DISPLAY TASKS RUNNING", tasks);
+
 function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
