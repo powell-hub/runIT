@@ -91,39 +91,36 @@ function logout() {
 // ===============================
 // TASK POST
 // ===============================
-function postTask() {
-  if (!currentUser) {
+async function postTask() {
+  const text = document.getElementById("taskInput").value;
+  const amount = Number(document.getElementById("amountInput").value);
+
+  const user = firebase.auth().currentUser;
+
+  if (!user) {
     showPopup("Login required");
     return;
   }
 
-  const text = document.getElementById("taskInput");
-  const amount = document.getElementById("amountInput");
-
-  if (!text || !amount || !text.value || !amount.value) {
+  if (!text || !amount) {
     showPopup("Fill all fields");
     return;
   }
 
-  loadData(); // 🔥 sync before write
-
-  const task = {
-    text: text.value,
-    amount: Number(amount.value),
+  await firebase.firestore().collection("tasks").add({
+    text: text,
+    amount: amount,
+    ownerId: user.uid,
+    workerId: null,
     status: "pending",
-    owner: currentUser,
-    worker: null
-  };
+    escrowHeld: true,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-  tasks.push(task);
-  saveData();
+  showPopup("Task created & escrow locked");
 
-  showPopup("Task posted!");
-
-  text.value = "";
-  amount.value = "";
-
-  displayTasks();
+  document.getElementById("taskInput").value = "";
+  document.getElementById("amountInput").value = "";
 }
 
 // ===============================
