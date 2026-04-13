@@ -1,22 +1,25 @@
 // ===============================
-// FIREBASE AUTH GUARD
+// FIREBASE INIT SAFE GUARD
 // ===============================
-firebase.auth().onAuthStateChanged(user => {
-  const page = window.location.pathname;
+let currentUser = null;
 
-  if (!user &&
-      !page.includes("login.html") &&
-      !page.includes("signup.html")) {
-    window.location.href = "login.html";
-    return;
-  }
+if (typeof firebase !== "undefined") {
+  firebase.auth().onAuthStateChanged(user => {
+    const page = window.location.pathname;
 
-  if (user) {
-    window.currentUser = user.email;
-    initApp();
-  }
-});
+    if (!user &&
+        !page.includes("login.html") &&
+        !page.includes("signup.html")) {
+      window.location.href = "login.html";
+      return;
+    }
 
+    if (user) {
+      currentUser = user.phoneNumber || user.email; // ✅ FIXED
+      initApp();
+    }
+  });
+}
 
 // ===============================
 // APP DATA (NO MORE LOCALSTORAGE USERS)
@@ -25,7 +28,6 @@ let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let services = JSON.parse(localStorage.getItem("services")) || [];
 let balances = JSON.parse(localStorage.getItem("balances")) || {};
 
-let currentUser = null;
 
 
 // ===============================
@@ -43,11 +45,12 @@ function initApp() {
 // LOGOUT
 // ===============================
 function logout() {
-  firebase.auth().signOut().then(() => {
-    window.location.href = "login.html";
-  });
-}
-
+  if (typeof firebase !== "undefined") {
+    firebase.auth().signOut().then(() => {
+      currentUser = null;
+      window.location.href = "login.html";
+    });
+  }
 
 // ===============================
 // SAVE DATA
