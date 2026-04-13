@@ -108,7 +108,7 @@ function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
 
-  loadData(); // 🔥 ALWAYS GET LATEST DATA
+  loadData(); // always sync latest
 
   taskList.innerHTML = "";
 
@@ -116,6 +116,9 @@ function displayTasks() {
 
     const status = (task.status || "pending").toLowerCase();
 
+    // =========================
+    // PENDING TASKS
+    // =========================
     if (status === "pending") {
       taskList.innerHTML += `
         <div class="task">
@@ -127,6 +130,9 @@ function displayTasks() {
       `;
     }
 
+    // =========================
+    // ACCEPTED (WORKER VIEW)
+    // =========================
     if (status === "accepted" && task.worker === currentUser) {
       taskList.innerHTML += `
         <div class="task">
@@ -138,17 +144,30 @@ function displayTasks() {
       `;
     }
 
-    if (status === "submitted" && task.owner === currentUser) {
+    // =========================
+    // REVIEWED (OWNER VIEW)
+    // =========================
+    if (status === "reviewed" && task.owner === currentUser) {
       taskList.innerHTML += `
         <div class="task">
           <p>${task.text}</p>
           <strong>₦${task.amount}</strong><br>
-          <small>Pending approval</small><br><br>
-          <button onclick="approveTask(${index})">Approve & Pay</button>
+          <small>Worker has submitted work</small><br><br>
+
+          <button onclick="confirmTask(${index})">
+            Confirm & Pay
+          </button>
+
+          <button onclick="rejectTask(${index})" style="background:red; color:white;">
+            Reject
+          </button>
         </div>
       `;
     }
 
+    // =========================
+    // COMPLETED
+    // =========================
     if (status === "completed") {
       taskList.innerHTML += `
         <div class="task" style="opacity:0.6;">
@@ -169,6 +188,7 @@ function acceptTask(index) {
   loadData();
 
   const task = tasks[index];
+
   if (task.status !== "pending") {
     showPopup("Task already taken");
     return;
@@ -185,23 +205,31 @@ function submitTask(index) {
   loadData();
 
   const task = tasks[index];
+
   if (task.worker !== currentUser) {
     showPopup("Not your task");
     return;
   }
 
-  task.status = "submitted";
+  // 🔥 NEW FLOW: goes to REVIEW instead of direct submit
+  task.status = "reviewed";
 
   saveData();
   displayTasks();
 }
 
-function approveTask(index) {
+function confirmTask(index) {
   loadData();
 
   const task = tasks[index];
+
   if (task.owner !== currentUser) {
     showPopup("Not allowed");
+    return;
+  }
+
+  if (task.status !== "reviewed") {
+    showPopup("Nothing to confirm");
     return;
   }
 
@@ -214,10 +242,38 @@ function approveTask(index) {
 
   saveData();
 
-  showPopup("Paid ₦" + earnings);
+  showPopup("Payment released ₦" + earnings);
 
   displayTasks();
   updateWallet();
+}
+
+function rejectTask(index) {
+  loadData();
+
+  const task = tasks[index];
+
+  if (task.owner !== currentUser) {
+    showPopup("Not allowed");
+    return;
+  }
+
+  if (task.status !== "reviewed") {
+    showPopup("Cannot reject this task");
+    return;
+  }
+
+  task.status = "accepted"; // sends back to worker
+
+  saveData();
+  displayTasks();
+
+  showPopup("Task sent back to worker");
+}
+
+function approveTask(index) {
+  // optional legacy safety redirect
+  confirmTask(index);
 }
 
 // ===============================
