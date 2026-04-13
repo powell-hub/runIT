@@ -1,33 +1,15 @@
 // ===============================
-// GLOBAL STATE (SAFE VERSION)
+// FIREBASE INIT (REQUIRED)
 // ===============================
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 let currentUser = null;
-let tasks = [];
-let services = [];
-let balances = {};
-
-// ===============================
-// LOAD DATA FROM STORAGE
-// ===============================
-function loadData() {
-  tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  services = JSON.parse(localStorage.getItem("services")) || [];
-  balances = JSON.parse(localStorage.getItem("balances")) || {};
-}
-
-// ===============================
-// SAVE DATA
-// ===============================
-function saveData() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("services", JSON.stringify(services));
-  localStorage.setItem("balances", JSON.stringify(balances));
-}
 
 // ===============================
 // AUTH STATE
 // ===============================
-firebase.auth().onAuthStateChanged(user => {
+auth.onAuthStateChanged(async (user) => {
   const page = window.location.pathname;
 
   if (!user &&
@@ -38,19 +20,29 @@ firebase.auth().onAuthStateChanged(user => {
   }
 
   if (user) {
-    currentUser = user.email;
+    currentUser = user;
+
+    // 🔥 CREATE USER IN FIRESTORE IF NOT EXISTS
+    const userRef = db.collection("users").doc(user.uid);
+    const docSnap = await userRef.get();
+
+    if (!docSnap.exists) {
+      await userRef.set({
+        email: user.email,
+        balance: 0
+      });
+    }
+
     initApp();
   }
 });
 
 // ===============================
-// INIT APP (CRITICAL FIX)
+// INIT APP
 // ===============================
 function initApp() {
-  loadData();          // 🔥 ALWAYS SYNC STORAGE FIRST
   displayTasks();
   updateWallet();
-  displayServices();
   setGreeting();
 }
 
@@ -58,261 +50,142 @@ function initApp() {
 // LOGOUT
 // ===============================
 function logout() {
-  firebase.auth().signOut()
-    .then(() => {
-      window.location.href = "login.html";
-    })
-    .catch((error) => {
-      alert(error.message);
-    });
+  auth.signOut().then(() => {
+    window.location.href = "login.html";
+  });
 }
 
 // ===============================
-// TASK POST
+// POST TASK (ESCROW START)
 // ===============================
 function postTask() {
-  if (!currentUser) {
-    showPopup("Login required");
-    return;
-  }
+  const text = document.getElementById("taskInput").value;
+  const amount = Number(document.getElementById("amountInput").value);
 
-  const text = document.getElementById("taskInput");
-  const amount = document.getElementById("amountInput");
-
-  if (!text || !amount || !text.value || !amount.value) {
+  if (!text || !amount) {
     showPopup("Fill all fields");
     return;
   }
 
-  loadData(); // 🔥 sync before write
-
-  const task = {
-    text: text.value,
-    amount: Number(amount.value),
+  db.collection("tasks").add({
+    text,
+    amount,
+    ownerId: currentUser.uid,
+    workerId: null,
     status: "pending",
-    owner: currentUser,
-    worker: null
-  };
+    escrowHeld: true,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-  tasks.push(task);
-  saveData();
-
-  showPopup("Task posted!");
-
-  text.value = "";
-  amount.value = "";
-
-  displayTasks();
+  showPopup("Task created (escrow active)");
 }
 
 // ===============================
-// DISPLAY TASKS (FIXED)
+// DISPLAY TASKS (REALTIME)
 // ===============================
 function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
 
-  loadData(); // always sync latest
+  db.collection("tasks").onSnapshot((snapshot) => {
+    taskList.innerHTML = "";
 
-  taskList.innerHTML = "";
+    snapshot.forEach((doc) => {
+      const task = doc.data();
+      const id = doc.id;
 
-  tasks.forEach((task, index) => {
+      let buttons = "";
 
-    const status = (task.status || "pending").toLowerCase();
+      // PENDING
+      if (task.status === "pending") {
+        buttons = `<button onclick="acceptTask('${id}')">Accept</button>`;
+      }
 
-    // =========================
-    // PENDING TASKS
-    // =========================
-    if (status === "pending") {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>Available</small><br><br>
-          <button onclick="acceptTask(${index})">Accept</button>
-        </div>
-      `;
-    }
+      // ACCEPTED (worker)
+      if (task.status === "accepted" && task.workerId === currentUser.uid) {
+        buttons = `<button onclick="submitTask('${id}')">Submit Work</button>`;
+      }
 
-    // =========================
-    // ACCEPTED (WORKER VIEW)
-    // =========================
-    if (status === "accepted" && task.worker === currentUser) {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>In Progress...</small><br><br>
-          <button onclick="submitTask(${index})">Submit Work</button>
-        </div>
-      `;
-    }
-
-    // =========================
-    // REVIEWED (OWNER VIEW)
-    // =========================
-    if (status === "reviewed" && task.owner === currentUser) {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>Worker has submitted work</small><br><br>
-
-          <button onclick="confirmTask(${index})">
+      // REVIEW (owner)
+      if (task.status === "reviewed" && task.ownerId === currentUser.uid) {
+        buttons = `
+          <button onclick="confirmTask('${id}', ${task.amount}, '${task.workerId}')">
             Confirm & Pay
           </button>
+          <button onclick="rejectTask('${id}')">Reject</button>
+        `;
+      }
 
-          <button onclick="rejectTask(${index})" style="background:red; color:white;">
-            Reject
-          </button>
-        </div>
-      `;
-    }
-
-    // =========================
-    // COMPLETED
-    // =========================
-    if (status === "completed") {
       taskList.innerHTML += `
-        <div class="task" style="opacity:0.6;">
+        <div class="task">
           <p>${task.text}</p>
           <strong>₦${task.amount}</strong><br>
-          <small>Completed ✅</small>
+          <small>${task.status}</small><br><br>
+          ${buttons}
         </div>
       `;
-    }
-
+    });
   });
 }
 
 // ===============================
-// TASK ACTIONS (SYNC FIXED)
+// TASK ACTIONS
 // ===============================
-function acceptTask(index) {
-  loadData();
+function acceptTask(taskId) {
+  db.collection("tasks").doc(taskId).update({
+    status: "accepted",
+    workerId: currentUser.uid
+  });
 
-  const task = tasks[index];
-
-  if (task.status !== "pending") {
-    showPopup("Task already taken");
-    return;
-  }
-
-  task.status = "accepted";
-  task.worker = currentUser;
-
-  saveData();
-  displayTasks();
+  showPopup("Task accepted");
 }
 
-function submitTask(index) {
-  loadData();
+function submitTask(taskId) {
+  db.collection("tasks").doc(taskId).update({
+    status: "reviewed"
+  });
 
-  const task = tasks[index];
-
-  if (task.worker !== currentUser) {
-    showPopup("Not your task");
-    return;
-  }
-
-  // 🔥 NEW FLOW: goes to REVIEW instead of direct submit
-  task.status = "reviewed";
-
-  saveData();
-  displayTasks();
+  showPopup("Submitted for review");
 }
 
-function confirmTask(index) {
-  loadData();
+// 🔥 ESCROW RELEASE
+function confirmTask(taskId, amount, workerId) {
+  const earnings = Math.floor(amount * 0.9);
 
-  const task = tasks[index];
+  // PAY WORKER
+  db.collection("users").doc(workerId).update({
+    balance: firebase.firestore.FieldValue.increment(earnings)
+  });
 
-  if (task.owner !== currentUser) {
-    showPopup("Not allowed");
-    return;
-  }
-
-  if (task.status !== "reviewed") {
-    showPopup("Nothing to confirm");
-    return;
-  }
-
-  task.status = "completed";
-
-  const earnings = Math.floor(task.amount * 0.9);
-
-  if (!balances[task.worker]) balances[task.worker] = 0;
-  balances[task.worker] += earnings;
-
-  saveData();
+  // COMPLETE TASK
+  db.collection("tasks").doc(taskId).update({
+    status: "completed",
+    escrowHeld: false
+  });
 
   showPopup("Payment released ₦" + earnings);
-
-  displayTasks();
-  updateWallet();
 }
 
-function rejectTask(index) {
-  loadData();
+function rejectTask(taskId) {
+  db.collection("tasks").doc(taskId).update({
+    status: "accepted"
+  });
 
-  const task = tasks[index];
-
-  if (task.owner !== currentUser) {
-    showPopup("Not allowed");
-    return;
-  }
-
-  if (task.status !== "reviewed") {
-    showPopup("Cannot reject this task");
-    return;
-  }
-
-  task.status = "accepted"; // sends back to worker
-
-  saveData();
-  displayTasks();
-
-  showPopup("Task sent back to worker");
-}
-
-function approveTask(index) {
-  // optional legacy safety redirect
-  confirmTask(index);
+  showPopup("Returned to worker");
 }
 
 // ===============================
-// WALLET
+// WALLET (REAL)
 // ===============================
 function updateWallet() {
   const el = document.getElementById("balance");
-  if (el && currentUser) {
-    el.innerText = balances[currentUser] || 0;
-  }
-}
+  if (!el) return;
 
-// ===============================
-// SERVICES
-// ===============================
-function addService() {
-  loadData();
-
-  const name = document.getElementById("serviceName");
-  const desc = document.getElementById("serviceDesc");
-
-  if (!name || !desc || !name.value || !desc.value) {
-    showPopup("Fill all fields");
-    return;
-  }
-
-  services.push({
-    name: name.value,
-    desc: desc.value,
-    owner: currentUser
-  });
-
-  saveData();
-
-  showPopup("Service added!");
+  db.collection("users").doc(currentUser.uid)
+    .onSnapshot((doc) => {
+      const data = doc.data();
+      el.innerText = data.balance || 0;
+    });
 }
 
 // ===============================
@@ -336,6 +209,6 @@ function showPopup(message) {
 function setGreeting() {
   const el = document.getElementById("greeting");
   if (el && currentUser) {
-    el.innerText = "Hello " + currentUser;
+    el.innerText = "Hello " + currentUser.email;
   }
 }
