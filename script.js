@@ -1,37 +1,33 @@
 // ===============================
-// FIREBASE INIT SAFE GUARD
+// GLOBAL STATE
 // ===============================
 let currentUser = null;
 
-if (typeof firebase !== "undefined") {
-  firebase.auth().onAuthStateChanged(user => {
-    const page = window.location.pathname;
-
-    if (!user &&
-        !page.includes("login.html") &&
-        !page.includes("signup.html")) {
-      window.location.href = "login.html";
-      return;
-    }
-
-    if (user) {
-      currentUser = user.phoneNumber || user.email; // ✅ FIXED
-      initApp();
-    }
-  });
-}
-
-// ===============================
-// APP DATA (NO MORE LOCALSTORAGE USERS)
-// ===============================
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 let services = JSON.parse(localStorage.getItem("services")) || [];
 let balances = JSON.parse(localStorage.getItem("balances")) || {};
 
+// ===============================
+// AUTH STATE (CRITICAL FIX)
+// ===============================
+firebase.auth().onAuthStateChanged(user => {
+  const page = window.location.pathname;
 
+  if (!user &&
+      !page.includes("login.html") &&
+      !page.includes("signup.html")) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (user) {
+    currentUser = user.email;
+    initApp();
+  }
+});
 
 // ===============================
-// INIT APP (ONLY AFTER LOGIN)
+// INIT APP (RUN ONLY AFTER LOGIN)
 // ===============================
 function initApp() {
   displayTasks();
@@ -40,17 +36,14 @@ function initApp() {
   setGreeting();
 }
 
-
 // ===============================
-// LOGOUT
+// LOGOUT (FIXED)
 // ===============================
 function logout() {
-  if (typeof firebase !== "undefined") {
-    firebase.auth().signOut().then(() => {
-      currentUser = null;
-      window.location.href = "login.html";
-    });
-  }
+  firebase.auth().signOut().then(() => {
+    window.location.href = "login.html";
+  });
+}
 
 // ===============================
 // SAVE DATA
@@ -61,26 +54,34 @@ function saveData() {
   localStorage.setItem("balances", JSON.stringify(balances));
 }
 
+// ===============================
+// BALANCE
+// ===============================
+function getBalance() {
+  if (!currentUser) return 0;
 
-// ===============================
-// BALANCE HELPERS
-// ===============================
-function getBalance(user) {
-  if (!balances[user]) balances[user] = 0;
-  return balances[user];
+  if (!balances[currentUser]) balances[currentUser] = 0;
+  return balances[currentUser];
 }
 
-function updateBalance(user, amount) {
-  if (!balances[user]) balances[user] = 0;
-  balances[user] += amount;
+function updateBalance(amount) {
+  if (!currentUser) return;
+
+  if (!balances[currentUser]) balances[currentUser] = 0;
+  balances[currentUser] += amount;
+
   saveData();
 }
 
-
 // ===============================
-// POST TASK
+// POST TASK (FIXED)
 // ===============================
 function postTask() {
+  if (!currentUser) {
+    showPopup("Login required");
+    return;
+  }
+
   const text = document.getElementById("taskInput");
   const amount = document.getElementById("amountInput");
 
@@ -104,8 +105,9 @@ function postTask() {
 
   text.value = "";
   amount.value = "";
-}
 
+  displayTasks();
+}
 
 // ===============================
 // DISPLAY TASKS
@@ -139,14 +141,6 @@ function displayTasks() {
             <button onclick="submitTask(${index})">Submit Work</button>
           </div>
         `;
-      } else {
-        taskList.innerHTML += `
-          <div class="task" style="opacity:0.6;">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>Someone is working on this</small>
-          </div>
-        `;
       }
     }
 
@@ -156,16 +150,8 @@ function displayTasks() {
           <div class="task">
             <p>${task.text}</p>
             <strong>₦${task.amount}</strong><br>
-            <small>Pending your approval</small><br><br>
+            <small>Pending approval</small><br><br>
             <button onclick="approveTask(${index})">Approve & Pay</button>
-          </div>
-        `;
-      } else {
-        taskList.innerHTML += `
-          <div class="task" style="opacity:0.6;">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>Waiting for approval...</small>
           </div>
         `;
       }
@@ -173,7 +159,7 @@ function displayTasks() {
 
     if (task.status === "completed") {
       taskList.innerHTML += `
-        <div class="task" style="opacity:0.5;">
+        <div class="task" style="opacity:0.6;">
           <p>${task.text}</p>
           <strong>₦${task.amount}</strong><br>
           <small>Completed ✅</small>
@@ -183,7 +169,6 @@ function displayTasks() {
 
   });
 }
-
 
 // ===============================
 // TASK ACTIONS
@@ -201,6 +186,7 @@ function acceptTask(index) {
 
   saveData();
   showPopup("Task accepted!");
+
   displayTasks();
 }
 
@@ -216,6 +202,7 @@ function submitTask(index) {
 
   saveData();
   showPopup("Task submitted");
+
   displayTasks();
 }
 
@@ -231,7 +218,7 @@ function approveTask(index) {
 
   const earnings = Math.floor(task.amount * 0.9);
 
-  updateBalance(task.worker, earnings);
+  updateBalance(earnings);
 
   saveData();
 
@@ -241,28 +228,13 @@ function approveTask(index) {
   updateWallet();
 }
 
-
 // ===============================
 // WALLET
 // ===============================
 function updateWallet() {
   const el = document.getElementById("balance");
-  if (el && currentUser) el.innerText = getBalance(currentUser);
+  if (el) el.innerText = getBalance();
 }
-
-function withdraw() {
-  if (getBalance(currentUser) < 1000) {
-    showPopup("Minimum withdrawal is ₦1000");
-    return;
-  }
-
-  balances[currentUser] = 0;
-  saveData();
-  updateWallet();
-
-  showPopup("Withdrawal successful!");
-}
-
 
 // ===============================
 // SERVICES
@@ -307,7 +279,6 @@ function displayServices() {
   });
 }
 
-
 // ===============================
 // POPUP
 // ===============================
@@ -322,7 +293,6 @@ function showPopup(message) {
     popup.style.display = "none";
   }, 2000);
 }
-
 
 // ===============================
 // GREETING
