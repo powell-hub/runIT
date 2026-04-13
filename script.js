@@ -1,14 +1,31 @@
 // ===============================
-// GLOBAL STATE
+// GLOBAL STATE (SAFE VERSION)
 // ===============================
 let currentUser = null;
-
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let services = JSON.parse(localStorage.getItem("services")) || [];
-let balances = JSON.parse(localStorage.getItem("balances")) || {};
+let tasks = [];
+let services = [];
+let balances = {};
 
 // ===============================
-// AUTH STATE (CRITICAL FIX)
+// LOAD DATA FROM STORAGE
+// ===============================
+function loadData() {
+  tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  services = JSON.parse(localStorage.getItem("services")) || [];
+  balances = JSON.parse(localStorage.getItem("balances")) || {};
+}
+
+// ===============================
+// SAVE DATA
+// ===============================
+function saveData() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem("services", JSON.stringify(services));
+  localStorage.setItem("balances", JSON.stringify(balances));
+}
+
+// ===============================
+// AUTH STATE
 // ===============================
 firebase.auth().onAuthStateChanged(user => {
   const page = window.location.pathname;
@@ -27,9 +44,10 @@ firebase.auth().onAuthStateChanged(user => {
 });
 
 // ===============================
-// INIT APP (RUN ONLY AFTER LOGIN)
+// INIT APP (CRITICAL FIX)
 // ===============================
 function initApp() {
+  loadData();          // 🔥 ALWAYS SYNC STORAGE FIRST
   displayTasks();
   updateWallet();
   displayServices();
@@ -37,7 +55,7 @@ function initApp() {
 }
 
 // ===============================
-// LOGOUT (FIXED)
+// LOGOUT
 // ===============================
 function logout() {
   firebase.auth().signOut().then(() => {
@@ -46,35 +64,7 @@ function logout() {
 }
 
 // ===============================
-// SAVE DATA
-// ===============================
-function saveData() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("services", JSON.stringify(services));
-  localStorage.setItem("balances", JSON.stringify(balances));
-}
-
-// ===============================
-// BALANCE
-// ===============================
-function getBalance() {
-  if (!currentUser) return 0;
-
-  if (!balances[currentUser]) balances[currentUser] = 0;
-  return balances[currentUser];
-}
-
-function updateBalance(amount) {
-  if (!currentUser) return;
-
-  if (!balances[currentUser]) balances[currentUser] = 0;
-  balances[currentUser] += amount;
-
-  saveData();
-}
-
-// ===============================
-// POST TASK (FIXED)
+// TASK POST
 // ===============================
 function postTask() {
   if (!currentUser) {
@@ -89,6 +79,8 @@ function postTask() {
     showPopup("Fill all fields");
     return;
   }
+
+  loadData(); // 🔥 sync before write
 
   const task = {
     text: text.value,
@@ -110,13 +102,13 @@ function postTask() {
 }
 
 // ===============================
-// DISPLAY TASKS
+// DISPLAY TASKS (FIXED)
 // ===============================
-console.log("DISPLAY TASKS RUNNING", tasks);
-
 function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
+
+  loadData(); // 🔥 ALWAYS GET LATEST DATA
 
   taskList.innerHTML = "";
 
@@ -169,12 +161,14 @@ function displayTasks() {
 
   });
 }
+
 // ===============================
-// TASK ACTIONS
+// TASK ACTIONS (SYNC FIXED)
 // ===============================
 function acceptTask(index) {
-  const task = tasks[index];
+  loadData();
 
+  const task = tasks[index];
   if (task.status !== "pending") {
     showPopup("Task already taken");
     return;
@@ -184,14 +178,13 @@ function acceptTask(index) {
   task.worker = currentUser;
 
   saveData();
-  showPopup("Task accepted!");
-
   displayTasks();
 }
 
 function submitTask(index) {
-  const task = tasks[index];
+  loadData();
 
+  const task = tasks[index];
   if (task.worker !== currentUser) {
     showPopup("Not your task");
     return;
@@ -200,14 +193,13 @@ function submitTask(index) {
   task.status = "submitted";
 
   saveData();
-  showPopup("Task submitted");
-
   displayTasks();
 }
 
 function approveTask(index) {
-  const task = tasks[index];
+  loadData();
 
+  const task = tasks[index];
   if (task.owner !== currentUser) {
     showPopup("Not allowed");
     return;
@@ -217,7 +209,8 @@ function approveTask(index) {
 
   const earnings = Math.floor(task.amount * 0.9);
 
-  updateBalance(earnings);
+  if (!balances[task.worker]) balances[task.worker] = 0;
+  balances[task.worker] += earnings;
 
   saveData();
 
@@ -232,13 +225,17 @@ function approveTask(index) {
 // ===============================
 function updateWallet() {
   const el = document.getElementById("balance");
-  if (el) el.innerText = getBalance();
+  if (el && currentUser) {
+    el.innerText = balances[currentUser] || 0;
+  }
 }
 
 // ===============================
 // SERVICES
 // ===============================
 function addService() {
+  loadData();
+
   const name = document.getElementById("serviceName");
   const desc = document.getElementById("serviceDesc");
 
@@ -256,26 +253,6 @@ function addService() {
   saveData();
 
   showPopup("Service added!");
-
-  name.value = "";
-  desc.value = "";
-}
-
-function displayServices() {
-  const list = document.getElementById("serviceList");
-  if (!list) return;
-
-  list.innerHTML = "";
-
-  services.forEach(service => {
-    list.innerHTML += `
-      <div class="task">
-        <p><strong>${service.name}</strong></p>
-        <p>${service.desc}</p>
-        <small>By ${service.owner}</small>
-      </div>
-    `;
-  });
 }
 
 // ===============================
@@ -298,7 +275,7 @@ function showPopup(message) {
 // ===============================
 function setGreeting() {
   const el = document.getElementById("greeting");
-  if (!el || !currentUser) return;
-
-  el.innerText = "Hello " + currentUser;
+  if (el && currentUser) {
+    el.innerText = "Hello " + currentUser;
+  }
 }
