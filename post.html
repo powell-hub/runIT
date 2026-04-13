@@ -7,6 +7,20 @@
 
 <body>
 
+<!-- POPUP -->
+<div id="popup" style="
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #6c4cff;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 10px;
+  display: none;
+  z-index: 9999;
+"></div>
+
 <div class="app">
 
   <!-- HEADER -->
@@ -14,7 +28,7 @@
     <div>Post Task</div>
   </div>
 
-  <!-- FORM CARD -->
+  <!-- FORM -->
   <div class="card">
 
     <input 
@@ -38,7 +52,7 @@
     Post Task
   </button>
 
-  <!-- NAVIGATION -->
+  <!-- NAV -->
   <div class="nav">
     <div onclick="location.href='index.html'">🏠 Home</div>
     <div onclick="location.href='tasks.html'">📋 Tasks</div>
@@ -47,28 +61,19 @@
 
 </div>
 
-<!-- SCRIPT -->
-<script src="script.js"></script>
-<div id="popup" style="
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #6c4cff;
-  color: white;
-  padding: 15px 25px;
-  border-radius: 10px;
-  display: none;
-">
-  Task Posted Successfully!
-</div>
+<!-- =========================
+     SCRIPTS (FIXED ORDER)
+========================= -->
 
-  <!-- Firebase -->
+<!-- Firebase Core -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
+<!-- Firebase Config -->
 <script src="firebase.js"></script>
+
+<!-- App Logic -->
 <script src="script.js"></script>
-  
+
 </body>
 </html>
