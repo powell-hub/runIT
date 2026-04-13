@@ -130,35 +130,16 @@ function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
 
-  firebase.firestore().collection("tasks")
-    .orderBy("createdAt", "desc")
-    .onSnapshot(snapshot => {
+  loadData(); // keep if you're still mixing localStorage (optional)
 
-      taskList.innerHTML = "";
+  taskList.innerHTML = "";
 
-      snapshot.forEach(doc => {
-        const task = doc.data();
-        const id = doc.id;
+  tasks.forEach((task, index) => {
 
-        taskList.innerHTML += `
-          <div class="task">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>${task.status}</small><br><br>
-
-            <button onclick="acceptTask('${id}')">Accept</button>
-            <button onclick="submitTask('${id}')">Submit</button>
-            <button onclick="releaseEscrow('${id}', '${task.ownerId}', '${task.workerId}', ${task.amount})">
-              Release
-            </button>
-          </div>
-        `;
-      });
-    });
-}
+    const status = (task.status || "pending").toLowerCase();
 
     // =========================
-    // PENDING TASKS
+    // PENDING (AVAILABLE TO ALL WORKERS)
     // =========================
     if (status === "pending") {
       taskList.innerHTML += `
@@ -172,7 +153,7 @@ function displayTasks() {
     }
 
     // =========================
-    // ACCEPTED (WORKER VIEW)
+    // ACCEPTED (ONLY WORKER)
     // =========================
     if (status === "accepted" && task.worker === currentUser) {
       taskList.innerHTML += `
@@ -186,35 +167,50 @@ function displayTasks() {
     }
 
     // =========================
-    // REVIEWED (OWNER VIEW)
+    // SUBMITTED (NOW WAITING FOR OWNER REVIEW)
     // =========================
-    if (status === "reviewed" && task.owner === currentUser) {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>Worker has submitted work</small><br><br>
+    if (status === "submitted") {
 
-          <button onclick="confirmTask(${index})">
-            Confirm & Pay
-          </button>
+      // OWNER VIEW (CAN APPROVE OR REJECT)
+      if (task.owner === currentUser) {
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>Worker submitted work</small><br><br>
 
-          <button onclick="rejectTask(${index})" style="background:red; color:white;">
-            Reject
-          </button>
-        </div>
-      `;
+            <button onclick="confirmTask(${index})">
+              Confirm & Pay
+            </button>
+
+            <button onclick="rejectTask(${index})" style="background:red; color:white;">
+              Reject
+            </button>
+          </div>
+        `;
+      }
+
+      // WORKER VIEW (WAITING)
+      if (task.worker === currentUser) {
+        taskList.innerHTML += `
+          <div class="task">
+            <p>${task.text}</p>
+            <strong>₦${task.amount}</strong><br>
+            <small>Waiting for owner review...</small>
+          </div>
+        `;
+      }
     }
 
     // =========================
-    // COMPLETED
+    // COMPLETED (ESCROW RELEASED)
     // =========================
     if (status === "completed") {
       taskList.innerHTML += `
         <div class="task" style="opacity:0.6;">
           <p>${task.text}</p>
           <strong>₦${task.amount}</strong><br>
-          <small>Completed ✅</small>
+          <small>Completed & Paid ✅</small>
         </div>
       `;
     }
