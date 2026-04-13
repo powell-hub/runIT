@@ -27,7 +27,8 @@ function saveData() {
 // ===============================
 // AUTH STATE
 // ===============================
-firebase.auth().onAuthStateChanged(user => {
+firebase.auth().onAuthStateChanged(async (user) => {
+
   const page = window.location.pathname;
 
   if (!user &&
@@ -38,7 +39,19 @@ firebase.auth().onAuthStateChanged(user => {
   }
 
   if (user) {
-    currentUser = user.email;
+    currentUser = user;
+
+    // 🔥 CREATE USER IN FIRESTORE IF NOT EXISTS
+    const userRef = firebase.firestore().collection("users").doc(user.uid);
+    const doc = await userRef.get();
+
+    if (!doc.exists) {
+      await userRef.set({
+        email: user.email,
+        balance: 0
+      });
+    }
+
     initApp();
   }
 });
