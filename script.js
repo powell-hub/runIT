@@ -120,7 +120,9 @@ function displayTasks() {
 
   tasks.forEach((task, index) => {
 
-    if (task.status === "pending") {
+    const status = (task.status || "pending").toLowerCase();
+
+    if (status === "pending") {
       taskList.innerHTML += `
         <div class="task">
           <p>${task.text}</p>
@@ -131,33 +133,29 @@ function displayTasks() {
       `;
     }
 
-    if (task.status === "accepted") {
-      if (task.worker === currentUser) {
-        taskList.innerHTML += `
-          <div class="task">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>In Progress...</small><br><br>
-            <button onclick="submitTask(${index})">Submit Work</button>
-          </div>
-        `;
-      }
+    if (status === "accepted" && task.worker === currentUser) {
+      taskList.innerHTML += `
+        <div class="task">
+          <p>${task.text}</p>
+          <strong>₦${task.amount}</strong><br>
+          <small>In Progress...</small><br><br>
+          <button onclick="submitTask(${index})">Submit Work</button>
+        </div>
+      `;
     }
 
-    if (task.status === "submitted") {
-      if (task.owner === currentUser) {
-        taskList.innerHTML += `
-          <div class="task">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>Pending approval</small><br><br>
-            <button onclick="approveTask(${index})">Approve & Pay</button>
-          </div>
-        `;
-      }
+    if (status === "submitted" && task.owner === currentUser) {
+      taskList.innerHTML += `
+        <div class="task">
+          <p>${task.text}</p>
+          <strong>₦${task.amount}</strong><br>
+          <small>Pending approval</small><br><br>
+          <button onclick="approveTask(${index})">Approve & Pay</button>
+        </div>
+      `;
     }
 
-    if (task.status === "completed") {
+    if (status === "completed") {
       taskList.innerHTML += `
         <div class="task" style="opacity:0.6;">
           <p>${task.text}</p>
@@ -169,7 +167,6 @@ function displayTasks() {
 
   });
 }
-
 // ===============================
 // TASK ACTIONS
 // ===============================
