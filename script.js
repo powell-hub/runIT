@@ -395,3 +395,39 @@ function setGreeting() {
     el.innerText = "Hello " + currentUser;
   }
 }
+
+function confirmTask(index) {
+  loadData();
+
+  const task = tasks[index];
+
+  if (!task) {
+    showPopup("Task not found");
+    return;
+  }
+
+  if (task.owner !== currentUser) {
+    showPopup("Only the owner can confirm this");
+    return;
+  }
+
+  if (task.status !== "submitted") {
+    showPopup("Task is not ready for confirmation");
+    return;
+  }
+
+  // escrow release
+  const earnings = Math.floor(task.amount * 0.9);
+
+  if (!balances[task.worker]) balances[task.worker] = 0;
+  balances[task.worker] += earnings;
+
+  task.status = "completed";
+
+  saveData();
+
+  showPopup("Escrow released: ₦" + earnings);
+
+  displayTasks();
+  updateWallet();
+}
