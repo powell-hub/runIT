@@ -5,6 +5,37 @@ let currentUser = null;
 let _taskListener = null;
 
 // ===============================
+// POPUP SYSTEM (GLOBAL)
+// ===============================
+function showPopup(message) {
+  let popup = document.getElementById("popup");
+
+  if (!popup) {
+    popup = document.createElement("div");
+    popup.id = "popup";
+    document.body.appendChild(popup);
+
+    popup.style.position = "fixed";
+    popup.style.top = "20px";
+    popup.style.left = "50%";
+    popup.style.transform = "translateX(-50%)";
+    popup.style.background = "#111";
+    popup.style.color = "#fff";
+    popup.style.padding = "12px 20px";
+    popup.style.borderRadius = "10px";
+    popup.style.zIndex = "9999";
+  }
+
+  popup.innerText = message;
+  popup.style.display = "block";
+
+  setTimeout(() => {
+    popup.style.display = "none";
+  }, 2000);
+}
+
+
+// ===============================
 // AUTH STATE
 // ===============================
 firebase.auth().onAuthStateChanged((user) => {
