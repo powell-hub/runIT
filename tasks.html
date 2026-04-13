@@ -7,7 +7,7 @@
 
 <body>
 
-  <div id="popup" style="
+<div id="popup" style="
   position: fixed;
   top: 20px;
   left: 50%;
@@ -19,10 +19,9 @@
   display: none;
   z-index: 9999;
 "></div>
-  
+
 <div class="app">
 
-  <!-- HEADER (WITH LOGOUT INSIDE) -->
   <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
     <div>Available Tasks</div>
 
@@ -32,16 +31,13 @@
       border-radius:6px;
       background:#ff4d4d;
       color:white;
-      cursor:pointer;
     ">
       Logout
     </button>
   </div>
 
-  <!-- TASK LIST -->
   <div id="taskList"></div>
 
-  <!-- NAVIGATION -->
   <div class="nav">
     <div onclick="location.href='index.html'">🏠 Home</div>
     <div>📋 Tasks</div>
@@ -50,9 +46,18 @@
 
 </div>
 
-<!-- SCRIPT -->
 <script src="firebase.js"></script>
 <script src="script.js"></script>
+
+<!-- 🔥 SAFE FALLBACK INIT -->
+<script>
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    if (typeof loadData === "function") loadData();
+    if (typeof displayTasks === "function") displayTasks();
+  }, 300);
+});
+</script>
 
 </body>
 </html>
