@@ -2,6 +2,7 @@
 // GLOBAL STATE
 // ===============================
 let currentUser = null;
+let _taskListener = null;
 
 // ===============================
 // AUTH STATE
@@ -41,7 +42,7 @@ function logout() {
 }
 
 // ===============================
-// POST TASK
+// POST TASK (ESCROW INIT)
 // ===============================
 async function postTask() {
   const text = document.getElementById("taskInput").value;
@@ -65,27 +66,23 @@ async function postTask() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    showPopup("Task posted successfully");
-    console.log("TASK CREATED");
+    showPopup("Task posted (Escrow locked)");
   } catch (err) {
     console.error(err);
-    showPopup("Task failed to post");
+    showPopup("Task failed");
   }
 }
 
 // ===============================
-// DISPLAY TASKS (LIVE FIRESTORE)
+// DISPLAY TASKS (ESCROW FLOW)
 // ===============================
 function displayTasks() {
   const taskList = document.getElementById("taskList");
   if (!taskList) return;
 
-  // 🔥 Prevent multiple listeners (THIS FIXES “flash then disappear” bug)
-  if (window._taskListener) {
-    window._taskListener();
-  }
+  if (_taskListener) _taskListener();
 
-  window._taskListener = firebase.firestore()
+  _taskListener = firebase.firestore()
     .collection("tasks")
     .orderBy("createdAt", "desc")
     .onSnapshot((snapshot) => {
@@ -96,6 +93,8 @@ function displayTasks() {
         const task = doc.data();
         const id = doc.id;
 
+        const userId = currentUser ? currentUser.uid : null;
+
         taskList.innerHTML += `
           <div class="task">
             <p>${task.text}</p>
@@ -103,14 +102,14 @@ function displayTasks() {
             <small>Status: ${task.status}</small><br><br>
 
             ${task.status === "pending" ? `
-              <button onclick="acceptTask('${id}')">Accept</button>
+              <button onclick="acceptTask('${id}')">Accept Task</button>
             ` : ""}
 
-            ${task.status === "accepted" && task.workerId === currentUser.uid ? `
+            ${task.status === "accepted" && task.workerId === userId ? `
               <button onclick="submitTask('${id}')">Submit Work</button>
             ` : ""}
 
-            ${task.status === "submitted" && task.ownerId === currentUser.uid ? `
+            ${task.status === "submitted" && task.ownerId === userId ? `
               <button onclick="confirmTask('${id}')">Confirm & Pay</button>
             ` : ""}
 
@@ -119,4 +118,70 @@ function displayTasks() {
       });
 
     });
+}
+
+// ===============================
+// ACCEPT TASK
+// ===============================
+async function acceptTask(id) {
+  try {
+    await firebase.firestore().collection("tasks").doc(id).update({
+      status: "accepted",
+      workerId: currentUser.uid
+    });
+
+    showPopup("Task accepted");
+  } catch (err) {
+    console.error(err);
+    showPopup("Accept failed");
+  }
+}
+
+// ===============================
+// SUBMIT TASK (WORKER DONE)
+// ===============================
+async function submitTask(id) {
+  try {
+    await firebase.firestore().collection("tasks").doc(id).update({
+      status: "submitted"
+    });
+
+    showPopup("Submitted for review");
+  } catch (err) {
+    console.error(err);
+    showPopup("Submit failed");
+  }
+}
+
+// ===============================
+// CONFIRM TASK (OWNER RELEASE ESCROW)
+// ===============================
+async function confirmTask(id) {
+  const ref = firebase.firestore().collection("tasks").doc(id);
+
+  try {
+    const doc = await ref.get();
+    const task = doc.data();
+
+    if (task.ownerId !== currentUser.uid) {
+      return showPopup("Not allowed");
+    }
+
+    if (task.status !== "submitted") {
+      return showPopup("Not ready");
+    }
+
+    const earnings = Math.floor(task.amount * 0.9);
+
+    // mark complete + release escrow
+    await ref.update({
+      status: "completed"
+    });
+
+    showPopup("Escrow released: ₦" + earnings);
+
+  } catch (err) {
+    console.error(err);
+    showPopup("Confirm failed");
+  }
 }
