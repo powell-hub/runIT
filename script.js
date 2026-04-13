@@ -43,23 +43,34 @@ function logout() {
 // ===============================
 // POST TASK
 // ===============================
-function postTask() {
+async function postTask() {
   const text = document.getElementById("taskInput").value;
   const amount = Number(document.getElementById("amountInput").value);
 
-  if (!currentUser) return showPopup("Login required");
-  if (!text || !amount) return showPopup("Fill all fields");
+  if (!firebase.auth().currentUser) {
+    return showPopup("Login required");
+  }
 
-  firebase.firestore().collection("tasks").add({
-    text,
-    amount,
-    status: "pending",
-    ownerId: currentUser.uid,
-    workerId: null,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  if (!text || !amount) {
+    return showPopup("Fill all fields");
+  }
 
-  showPopup("Task posted!");
+  try {
+    await firebase.firestore().collection("tasks").add({
+      text,
+      amount,
+      status: "pending",
+      ownerId: firebase.auth().currentUser.uid,
+      workerId: null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showPopup("Task posted successfully");
+    console.log("TASK CREATED");
+  } catch (err) {
+    console.error(err);
+    showPopup("Task failed to post");
+  }
 }
 
 // ===============================
