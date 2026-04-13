@@ -1,69 +1,33 @@
 // ===============================
-// GLOBAL STATE (SAFE VERSION)
+// GLOBAL STATE
 // ===============================
 let currentUser = null;
-let tasks = [];
-let services = [];
-let balances = {};
-
-// ===============================
-// LOAD DATA FROM STORAGE
-// ===============================
-function loadData() {
-  tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  services = JSON.parse(localStorage.getItem("services")) || [];
-  balances = JSON.parse(localStorage.getItem("balances")) || {};
-}
-
-// ===============================
-// SAVE DATA
-// ===============================
-function saveData() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("services", JSON.stringify(services));
-  localStorage.setItem("balances", JSON.stringify(balances));
-}
 
 // ===============================
 // AUTH STATE
 // ===============================
-firebase.auth().onAuthStateChanged(async (user) => {
-
+firebase.auth().onAuthStateChanged((user) => {
   const page = window.location.pathname;
 
   if (!user &&
-      !page.includes("login.html") &&
-      !page.includes("signup.html")) {
+    !page.includes("login.html") &&
+    !page.includes("signup.html")) {
     window.location.href = "login.html";
     return;
   }
 
   if (user) {
     currentUser = user;
-
-    // 🔥 CREATE USER IN FIRESTORE IF NOT EXISTS
-    const userRef = firebase.firestore().collection("users").doc(user.uid);
-    const doc = await userRef.get();
-
-    if (!doc.exists) {
-      await userRef.set({
-        email: user.email,
-        balance: 0
-      });
-    }
-
     initApp();
   }
 });
 
 // ===============================
-// INIT APP (CRITICAL FIX)
+// INIT
 // ===============================
 function initApp() {
-  loadData();          // 🔥 ALWAYS SYNC STORAGE FIRST
   displayTasks();
   updateWallet();
-  displayServices();
   setGreeting();
 }
 
@@ -71,363 +35,36 @@ function initApp() {
 // LOGOUT
 // ===============================
 function logout() {
-  if (!firebase || !firebase.auth) {
-    console.error("Firebase Auth not loaded");
-    alert("Auth system not ready. Try refreshing.");
-    return;
-  }
-
-  firebase.auth().signOut()
-    .then(() => {
-      localStorage.clear(); // optional but prevents ghost sessions
-      window.location.href = "login.html";
-    })
-    .catch((error) => {
-      console.error("Logout error:", error);
-      alert(error.message);
-    });
+  firebase.auth().signOut().then(() => {
+    window.location.href = "login.html";
+  });
 }
 
 // ===============================
-// TASK POST
+// POST TASK
 // ===============================
-async function postTask() {
+function postTask() {
   const text = document.getElementById("taskInput").value;
   const amount = Number(document.getElementById("amountInput").value);
 
-  const user = firebase.auth().currentUser;
+  if (!currentUser) return showPopup("Login required");
+  if (!text || !amount) return showPopup("Fill all fields");
 
-  if (!user) {
-    showPopup("Login required");
-    return;
-  }
-
-  if (!text || !amount) {
-    showPopup("Fill all fields");
-    return;
-  }
-
-  await firebase.firestore().collection("tasks").add({
-    text: text,
-    amount: amount,
-    ownerId: user.uid,
-    workerId: null,
+  firebase.firestore().collection("tasks").add({
+    text,
+    amount,
     status: "pending",
-    escrowHeld: true,
+    ownerId: currentUser.uid,
+    workerId: null,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  showPopup("Task created & escrow locked");
-
-  document.getElementById("taskInput").value = "";
-  document.getElementById("amountInput").value = "";
+  showPopup("Task posted!");
 }
 
 // ===============================
-// DISPLAY TASKS (FIXED)
+// DISPLAY TASKS (LIVE FIRESTORE)
 // ===============================
 function displayTasks() {
   const taskList = document.getElementById("taskList");
-  if (!taskList) return;
-
-  loadData(); // keep if you're still mixing localStorage (optional)
-
-  taskList.innerHTML = "";
-
-  tasks.forEach((task, index) => {
-
-    const status = (task.status || "pending").toLowerCase();
-
-    // =========================
-    // PENDING (AVAILABLE TO ALL WORKERS)
-    // =========================
-    if (status === "pending") {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>Available</small><br><br>
-          <button onclick="acceptTask(${index})">Accept</button>
-        </div>
-      `;
-    }
-
-    // =========================
-    // ACCEPTED (ONLY WORKER)
-    // =========================
-    if (status === "accepted" && task.worker === currentUser) {
-      taskList.innerHTML += `
-        <div class="task">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>In Progress...</small><br><br>
-          <button onclick="submitTask(${index})">Submit Work</button>
-        </div>
-      `;
-    }
-
-    // =========================
-    // SUBMITTED (NOW WAITING FOR OWNER REVIEW)
-    // =========================
-    if (status === "submitted") {
-
-      // OWNER VIEW (CAN APPROVE OR REJECT)
-      if (task.owner === currentUser) {
-        taskList.innerHTML += `
-          <div class="task">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>Worker submitted work</small><br><br>
-
-            <button onclick="confirmTask(${index})">
-              Confirm & Pay
-            </button>
-
-            <button onclick="rejectTask(${index})" style="background:red; color:white;">
-              Reject
-            </button>
-          </div>
-        `;
-      }
-
-      // WORKER VIEW (WAITING)
-      if (task.worker === currentUser) {
-        taskList.innerHTML += `
-          <div class="task">
-            <p>${task.text}</p>
-            <strong>₦${task.amount}</strong><br>
-            <small>Waiting for owner review...</small>
-          </div>
-        `;
-      }
-    }
-
-    // =========================
-    // COMPLETED (ESCROW RELEASED)
-    // =========================
-    if (status === "completed") {
-      taskList.innerHTML += `
-        <div class="task" style="opacity:0.6;">
-          <p>${task.text}</p>
-          <strong>₦${task.amount}</strong><br>
-          <small>Completed & Paid ✅</small>
-        </div>
-      `;
-    }
-
-  });
-}
-
-// ===============================
-// TASK ACTIONS (SYNC FIXED)
-// ===============================
-// =========================
-// ACCEPT TASK
-// =========================
-function acceptTask(index) {
-  loadData();
-
-  const task = tasks[index];
-  if (!task) return showPopup("Task not found");
-
-  if (task.status !== "pending") {
-    showPopup("Task already taken");
-    return;
-  }
-
-  task.status = "accepted";
-  task.worker = currentUser;
-
-  saveData();
-  displayTasks();
-}
-
-
-// =========================
-// SUBMIT TASK (WORKER FINISHES)
-// =========================
-function submitTask(index) {
-  loadData();
-
-  const task = tasks[index];
-  if (!task) return showPopup("Task not found");
-
-  if (task.worker !== currentUser) {
-    showPopup("Not your task");
-    return;
-  }
-
-  task.status = "reviewed"; // goes to OWNER
-
-  saveData();
-  displayTasks();
-
-  showPopup("Submitted for review");
-}
-
-
-// =========================
-// CONFIRM TASK (ESCROW RELEASE)
-// =========================
-function confirmTask(index) {
-  loadData();
-
-  const task = tasks[index];
-  if (!task) return showPopup("Task not found");
-
-  if (task.owner !== currentUser) {
-    showPopup("Not allowed");
-    return;
-  }
-
-  if (task.status !== "reviewed") {
-    showPopup("Nothing to confirm");
-    return;
-  }
-
-  task.status = "completed";
-
-  const earnings = Math.floor(task.amount * 0.9);
-
-  if (!balances[task.worker]) balances[task.worker] = 0;
-  balances[task.worker] += earnings;
-
-  saveData();
-
-  showPopup("Paid ₦" + earnings);
-
-  displayTasks();
-  updateWallet();
-}
-
-
-// =========================
-// REJECT TASK (SEND BACK)
-// =========================
-function rejectTask(index) {
-  loadData();
-
-  const task = tasks[index];
-  if (!task) return showPopup("Task not found");
-
-  if (task.owner !== currentUser) {
-    showPopup("Not allowed");
-    return;
-  }
-
-  if (task.status !== "reviewed") {
-    showPopup("Cannot reject this task");
-    return;
-  }
-
-  task.status = "accepted"; // back to worker
-
-  saveData();
-  displayTasks();
-
-  showPopup("Returned to worker");
-}
-
-
-// =========================
-// LEGACY SAFETY
-// =========================
-function approveTask(index) {
-  confirmTask(index);
-}
-
-// ===============================
-// WALLET
-// ===============================
-function updateWallet() {
-  const el = document.getElementById("balance");
-  if (el && currentUser) {
-    el.innerText = balances[currentUser] || 0;
-  }
-}
-
-// ===============================
-// SERVICES
-// ===============================
-function addService() {
-  loadData();
-
-  const name = document.getElementById("serviceName");
-  const desc = document.getElementById("serviceDesc");
-
-  if (!name || !desc || !name.value || !desc.value) {
-    showPopup("Fill all fields");
-    return;
-  }
-
-  services.push({
-    name: name.value,
-    desc: desc.value,
-    owner: currentUser
-  });
-
-  saveData();
-
-  showPopup("Service added!");
-}
-
-// ===============================
-// POPUP
-// ===============================
-function showPopup(message) {
-  const popup = document.getElementById("popup");
-  if (!popup) return;
-
-  popup.innerText = message;
-  popup.style.display = "block";
-
-  setTimeout(() => {
-    popup.style.display = "none";
-  }, 2000);
-}
-
-// ===============================
-// GREETING
-// ===============================
-function setGreeting() {
-  const el = document.getElementById("greeting");
-  if (el && currentUser) {
-    el.innerText = "Hello " + currentUser;
-  }
-}
-
-function confirmTask(index) {
-  loadData();
-
-  const task = tasks[index];
-
-  if (!task) {
-    showPopup("Task not found");
-    return;
-  }
-
-  if (task.owner !== currentUser) {
-    showPopup("Only the owner can confirm this");
-    return;
-  }
-
-  if (task.status !== "submitted") {
-    showPopup("Task is not ready for confirmation");
-    return;
-  }
-
-  // escrow release
-  const earnings = Math.floor(task.amount * 0.9);
-
-  if (!balances[task.worker]) balances[task.worker] = 0;
-  balances[task.worker] += earnings;
-
-  task.status = "completed";
-
-  saveData();
-
-  showPopup("Escrow released: ₦" + earnings);
-
-  displayTasks();
-  updateWallet();
-}
+  if (!taskList)
