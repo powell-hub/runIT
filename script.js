@@ -71,11 +71,19 @@ function initApp() {
 // LOGOUT
 // ===============================
 function logout() {
+  if (!firebase || !firebase.auth) {
+    console.error("Firebase Auth not loaded");
+    alert("Auth system not ready. Try refreshing.");
+    return;
+  }
+
   firebase.auth().signOut()
     .then(() => {
+      localStorage.clear(); // optional but prevents ghost sessions
       window.location.href = "login.html";
     })
     .catch((error) => {
+      console.error("Logout error:", error);
       alert(error.message);
     });
 }
