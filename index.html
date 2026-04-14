@@ -25,8 +25,14 @@
 
     <!-- HEADER -->
     <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
-      <div id="greeting">RunIT</div>
+      
+      <!-- LEFT SIDE -->
+      <div>
+        <div>RunIT</div>
+        <div id="greeting" style="font-size:14px; color:#666;">Loading...</div>
+      </div>
 
+      <!-- LOGOUT -->
       <button onclick="logout()" 
         style="padding:6px 10px; border:none; border-radius:6px; background:#ff4d4d; color:white;">
         Logout
@@ -58,9 +64,6 @@
 
   </div>
 
-  <script src="script.js"></script>
-  
-    
   <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -69,7 +72,7 @@
 <script src="firebase.js"></script>
 <script src="script.js"></script>
 
-<!-- ✅ ADDED GREETING LOGIC -->
+<!-- 🔥 FIXED GREETING LOGIC -->
 <script>
 firebase.auth().onAuthStateChanged((user) => {
   if (!user) {
@@ -77,20 +80,33 @@ firebase.auth().onAuthStateChanged((user) => {
     return;
   }
 
+  const greetingEl = document.getElementById("greeting");
+
   firebase.firestore().collection("users").doc(user.uid).get()
     .then((doc) => {
-      if (doc.exists) {
-        const data = doc.data();
-        const firstName = data.username.split(" ")[0];
 
-        document.getElementById("greeting").innerText =
-          "HELLO " + firstName.toUpperCase();
+      let name = "";
+
+      if (doc.exists && doc.data().username) {
+        name = doc.data().username;
+      } else if (user.displayName) {
+        name = user.displayName;
       } else {
-        document.getElementById("greeting").innerText = "HELLO USER";
+        greetingEl.innerText = "HELLO USER";
+        return;
       }
+
+      const firstName = name.split(" ")[0];
+      greetingEl.innerText = "HELLO " + firstName.toUpperCase();
+
     })
     .catch(() => {
-      document.getElementById("greeting").innerText = "HELLO USER";
+      if (user.displayName) {
+        const firstName = user.displayName.split(" ")[0];
+        greetingEl.innerText = "HELLO " + firstName.toUpperCase();
+      } else {
+        greetingEl.innerText = "HELLO USER";
+      }
     });
 });
 </script>
