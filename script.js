@@ -48,7 +48,7 @@ firebase.auth().onAuthStateChanged((user) => {
     return;
   }
 
-  currentUser = user;
+  currentUser = user || null;
 
   if (user) initApp();
 });
@@ -92,7 +92,7 @@ async function postTask() {
 }
 
 // ===============================
-// DISPLAY TASKS (CLEAN + SAFE)
+// DISPLAY TASKS
 // ===============================
 function displayTasks() {
   const taskList = document.getElementById("taskList");
@@ -111,12 +111,11 @@ function displayTasks() {
         const task = doc.data();
         const id = doc.id;
 
-        // ❌ hide completed everywhere
         if (task.status === "completed") return;
 
         const uid = currentUser?.uid;
-        const isOwner = uid === task.ownerId;
-        const isWorker = uid === task.workerId;
+        const isOwner = uid && uid === task.ownerId;
+        const isWorker = uid && uid === task.workerId;
 
         taskList.innerHTML += `
           <div class="task">
@@ -152,13 +151,14 @@ function displayTasks() {
 // ACCEPT TASK
 // ===============================
 async function acceptTask(id) {
-  const user = currentUser;
-  if (!user) return showPopup("Login required");
+  if (!currentUser) return showPopup("Login required");
 
   const ref = firebase.firestore().collection("tasks").doc(id);
   const task = (await ref.get()).data();
 
-  if (task.ownerId === user.uid)
+  if (!task) return showPopup("Task not found");
+
+  if (task.ownerId === currentUser.uid)
     return showPopup("Cannot accept your own task");
 
   if (task.status !== "pending")
@@ -166,7 +166,7 @@ async function acceptTask(id) {
 
   await ref.update({
     status: "accepted",
-    workerId: user.uid
+    workerId: currentUser.uid
   });
 
   showPopup("Task accepted");
@@ -176,12 +176,14 @@ async function acceptTask(id) {
 // SUBMIT TASK
 // ===============================
 async function submitTask(id) {
-  const user = currentUser;
+  if (!currentUser) return showPopup("Login required");
 
   const ref = firebase.firestore().collection("tasks").doc(id);
   const task = (await ref.get()).data();
 
-  if (task.workerId !== user.uid)
+  if (!task) return showPopup("Task not found");
+
+  if (task.workerId !== currentUser.uid)
     return showPopup("Not your task");
 
   await ref.update({
@@ -195,12 +197,14 @@ async function submitTask(id) {
 // CONFIRM TASK (ESCROW RELEASE)
 // ===============================
 async function confirmTask(id) {
-  const user = currentUser;
+  if (!currentUser) return showPopup("Login required");
 
   const ref = firebase.firestore().collection("tasks").doc(id);
   const task = (await ref.get()).data();
 
-  if (task.ownerId !== user.uid)
+  if (!task) return showPopup("Task not found");
+
+  if (task.ownerId !== currentUser.uid)
     return showPopup("Only owner can confirm");
 
   if (task.status !== "submitted")
@@ -218,21 +222,37 @@ async function confirmTask(id) {
 }
 
 // ===============================
-// CHAT SYSTEM (FIXED)
+// CHAT SYSTEM (SECURED)
 // ===============================
 function openChat(taskId) {
-  currentChatTaskId = taskId;
+  if (!currentUser) return showPopup("Login required");
 
-  const chatSection = document.getElementById("chatSection");
-  const chatBox = document.getElementById("chatBox");
+  firebase.firestore()
+    .collection("tasks")
+    .doc(taskId)
+    .get()
+    .then(doc => {
+      const task = doc.data();
 
-  if (!chatSection || !chatBox) {
-    showPopup("Chat UI missing");
-    return;
-  }
+      if (!task) return showPopup("Task not found");
 
-  chatSection.style.display = "block";
-  loadChat(taskId);
+      if (currentUser.uid !== task.ownerId &&
+          currentUser.uid !== task.workerId) {
+        return showPopup("Not part of this chat");
+      }
+
+      currentChatTaskId = taskId;
+
+      const chatSection = document.getElementById("chatSection");
+      const chatBox = document.getElementById("chatBox");
+
+      if (!chatSection || !chatBox)
+        return showPopup("Chat UI missing");
+
+      chatSection.style.display = "block";
+
+      loadChat(taskId);
+    });
 }
 
 // ===============================
