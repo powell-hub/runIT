@@ -1,108 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tasks - RunIT</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Tasks</title>
 </head>
 
 <body>
 
-<!-- POPUP -->
-<div id="popup" style="
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: black;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  display: none;
-  z-index: 9999;
-"></div>
+<div id="taskList"></div>
 
-<div class="app">
+<!-- CHAT -->
+<div id="chatSection" style="display:none;">
+  <h3>Chat</h3>
 
-  <!-- HEADER -->
-  <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
-    <div>Available Tasks</div>
+  <div id="chatBox" style="height:200px; overflow:auto;"></div>
 
-    <button onclick="logout()" style="
-      padding:6px 10px;
-      border:none;
-      border-radius:6px;
-      background:#ff4d4d;
-      color:white;
-    ">
-      Logout
-    </button>
-  </div>
-
-  <!-- TASK LIST -->
-  <div id="taskList"></div>
-
-  <!-- 🔥 CHAT SECTION (NEW) -->
-  <div id="chatSection" style="
-    display:none;
-    margin-top:20px;
-    border-top:1px solid #ccc;
-    padding-top:15px;
-  ">
-    <h3>Task Chat</h3>
-
-    <div id="chatBox" style="
-      height:200px;
-      overflow-y:auto;
-      border:1px solid #ccc;
-      padding:10px;
-      margin-bottom:10px;
-      background:#fafafa;
-    "></div>
-
-    <input id="chatInput" placeholder="Type message..." style="
-      width:70%;
-      padding:8px;
-    " />
-
-    <button onclick="sendCurrentMessage()" style="
-      padding:8px 12px;
-      background:#6c4cff;
-      color:white;
-      border:none;
-      border-radius:6px;
-    ">
-      Send
-    </button>
-  </div>
-
-  <!-- NAVIGATION -->
-  <div class="nav">
-    <div onclick="location.href='index.html'">🏠 Home</div>
-    <div>📋 Tasks</div>
-    <div onclick="location.href='wallet.html'">💳 Wallet</div>
-  </div>
-
+  <input id="chatInput" placeholder="message">
+  <button onclick="sendCurrentMessage()">Send</button>
 </div>
 
-<!-- 🔥 FIREBASE CORE -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<!-- 🔥 YOUR CONFIG -->
-<script src="./firebase.js"></script>
-
-<!-- 🔥 YOUR LOGIC -->
-<script src="./script.js"></script>
-
-<!-- 🔥 SAFE FALLBACK INIT -->
-<script>
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    if (typeof displayTasks === "function") displayTasks();
-  }, 300);
-});
-</script>
+<script src="firebase.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
