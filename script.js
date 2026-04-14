@@ -191,11 +191,25 @@ async function acceptTask(id) {
 // ===============================
 async function submitTask(id) {
   try {
-    await firebase.firestore().collection("tasks").doc(id).update({
+    const ref = firebase.firestore().collection("tasks").doc(id);
+    const doc = await ref.get();
+    const task = doc.data();
+
+    const user = firebase.auth().currentUser;
+
+    if (!user) return showPopup("Login required");
+
+    // 🔒 ONLY WORKER CAN SUBMIT
+    if (task.workerId !== user.uid) {
+      return showPopup("Only worker can submit this task");
+    }
+
+    await ref.update({
       status: "submitted"
     });
 
     showPopup("Submitted for review");
+
   } catch (err) {
     console.error(err);
     showPopup("Submit failed");
@@ -206,31 +220,34 @@ async function submitTask(id) {
 // CONFIRM TASK (OWNER RELEASE ESCROW)
 // ===============================
 async function confirmTask(id) {
-  const ref = firebase.firestore().collection("tasks").doc(id);
-
   try {
+    const ref = firebase.firestore().collection("tasks").doc(id);
     const doc = await ref.get();
     const task = doc.data();
 
-    if (task.ownerId !== currentUser.uid) {
-      return showPopup("Not allowed");
+    const user = firebase.auth().currentUser;
+
+    if (!user) return showPopup("Login required");
+
+    // 🔒 ONLY OWNER CAN CONFIRM
+    if (task.ownerId !== user.uid) {
+      return showPopup("Only task owner can confirm payment");
     }
 
     if (task.status !== "submitted") {
-      return showPopup("Not ready");
+      return showPopup("Task not ready for confirmation");
     }
 
     const earnings = Math.floor(task.amount * 0.9);
 
-    // mark complete + release escrow
     await ref.update({
       status: "completed"
     });
 
-    showPopup("Escrow released: ₦" + earnings);
+    showPopup("Payment released: ₦" + earnings);
 
   } catch (err) {
     console.error(err);
-    showPopup("Confirm failed");
+    showPopup("Confirmation failed");
   }
 }
