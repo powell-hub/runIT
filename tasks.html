@@ -115,7 +115,7 @@
         taskList.innerHTML += `
           <div class="task-card">
 
-            <div class="task-text">${task.text || "Untitled Task"}</div>
+            <div class="task-text">${task.title || task.text || task.taskName || "Untitled Task"}</div>
 
             <div class="task-info">
               ₦${task.price || 0} • ${task.description || "No description"}
