@@ -80,10 +80,26 @@
       font-size: 18px;
       font-weight: bold;
     }
+
+    /* POPUP */
+    #popup {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #6c4cff;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      display: none;
+      z-index: 9999;
+    }
   </style>
 </head>
 
 <body>
+
+  <div id="popup"></div>
 
   <div class="header">📋 Available Tasks</div>
 
@@ -100,7 +116,38 @@
 
   <script>
     const taskList = document.getElementById("taskList");
+    const popup = document.getElementById("popup");
 
+    function showPopup(message) {
+      popup.innerText = message;
+      popup.style.display = "block";
+
+      setTimeout(() => {
+        popup.style.display = "none";
+      }, 2000);
+    }
+
+    // VIEW TASK FUNCTION (FIXED)
+    function viewTask(taskId) {
+      firebase.firestore().collection("tasks").doc(taskId).get()
+        .then((doc) => {
+          if (!doc.exists) {
+            showPopup("Task not found");
+            return;
+          }
+
+          const task = doc.data();
+
+          showPopup(
+            task.title || task.text || task.taskName || "Untitled Task"
+          );
+        })
+        .catch(err => {
+          showPopup(err.message);
+        });
+    }
+
+    // LOAD TASKS
     firebase.firestore().collection("tasks").onSnapshot(snapshot => {
       taskList.innerHTML = "";
 
@@ -115,7 +162,9 @@
         taskList.innerHTML += `
           <div class="task-card">
 
-            <div class="task-text">${task.title || task.text || task.taskName || "Untitled Task"}</div>
+            <div class="task-title">
+              ${task.title || task.text || task.taskName || "Untitled Task"}
+            </div>
 
             <div class="task-info">
               ₦${task.price || 0} • ${task.description || "No description"}
