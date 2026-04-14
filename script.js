@@ -3,9 +3,10 @@
 // ===============================
 let currentUser = null;
 let _taskListener = null;
+let currentChatTaskId = null;
 
 // ===============================
-// POPUP SYSTEM (GLOBAL)
+// POPUP SYSTEM
 // ===============================
 function showPopup(message) {
   let popup = document.getElementById("popup");
@@ -15,25 +16,24 @@ function showPopup(message) {
     popup.id = "popup";
     document.body.appendChild(popup);
 
-    popup.style.position = "fixed";
-    popup.style.top = "20px";
-    popup.style.left = "50%";
-    popup.style.transform = "translateX(-50%)";
-    popup.style.background = "#111";
-    popup.style.color = "#fff";
-    popup.style.padding = "12px 20px";
-    popup.style.borderRadius = "10px";
-    popup.style.zIndex = "9999";
+    Object.assign(popup.style, {
+      position: "fixed",
+      top: "20px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: "#111",
+      color: "#fff",
+      padding: "12px 20px",
+      borderRadius: "10px",
+      zIndex: "9999"
+    });
   }
 
   popup.innerText = message;
   popup.style.display = "block";
 
-  setTimeout(() => {
-    popup.style.display = "none";
-  }, 2000);
+  setTimeout(() => popup.style.display = "none", 2000);
 }
-
 
 // ===============================
 // AUTH STATE
@@ -73,39 +73,29 @@ function logout() {
 }
 
 // ===============================
-// POST TASK (ESCROW INIT)
+// POST TASK
 // ===============================
 async function postTask() {
   const text = document.getElementById("taskInput").value;
   const amount = Number(document.getElementById("amountInput").value);
 
-  if (!firebase.auth().currentUser) {
-    return showPopup("Login required");
-  }
+  if (!currentUser) return showPopup("Login required");
+  if (!text || !amount) return showPopup("Fill all fields");
 
-  if (!text || !amount) {
-    return showPopup("Fill all fields");
-  }
+  await firebase.firestore().collection("tasks").add({
+    text,
+    amount,
+    status: "pending",
+    ownerId: currentUser.uid,
+    workerId: null,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-  try {
-    await firebase.firestore().collection("tasks").add({
-      text,
-      amount,
-      status: "pending",
-      ownerId: firebase.auth().currentUser.uid,
-      workerId: null,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    showPopup("Task posted (Escrow locked)");
-  } catch (err) {
-    console.error(err);
-    showPopup("Task failed");
-  }
+  showPopup("Task posted (Escrow locked)");
 }
 
 // ===============================
-// DISPLAY TASKS (ESCROW FLOW)
+// DISPLAY TASKS
 // ===============================
 function displayTasks() {
   const taskList = document.getElementById("taskList");
@@ -124,7 +114,10 @@ function displayTasks() {
         const task = doc.data();
         const id = doc.id;
 
-        const userId = currentUser ? currentUser.uid : null;
+        const uid = currentUser?.uid;
+
+        const isOwner = uid === task.ownerId;
+        const isWorker = uid === task.workerId;
 
         taskList.innerHTML += `
           <div class="task">
@@ -132,18 +125,21 @@ function displayTasks() {
             <strong>₦${task.amount}</strong><br>
             <small>Status: ${task.status}</small><br><br>
 
-            ${task.status === "pending" ? `
-              <button onclick="acceptTask('${id}')">Accept Task</button>
+            ${task.status === "pending" && !isOwner ? `
+              <button onclick="acceptTask('${id}')">Accept</button>
             ` : ""}
 
-            ${task.status === "accepted" && task.workerId === userId ? `
+            ${task.status === "accepted" && isWorker ? `
               <button onclick="submitTask('${id}')">Submit Work</button>
             ` : ""}
 
-            ${task.status === "submitted" && task.ownerId === userId ? `
+            ${task.status === "submitted" && isOwner ? `
               <button onclick="confirmTask('${id}')">Confirm & Pay</button>
             ` : ""}
 
+            ${(isOwner || isWorker) ? `
+              <button onclick="openChat('${id}')">Chat</button>
+            ` : ""}
           </div>
         `;
       });
@@ -155,99 +151,147 @@ function displayTasks() {
 // ACCEPT TASK
 // ===============================
 async function acceptTask(id) {
-  try {
-    const ref = firebase.firestore().collection("tasks").doc(id);
-    const doc = await ref.get();
-    const task = doc.data();
+  const user = firebase.auth().currentUser;
+  if (!user) return showPopup("Login required");
 
-    const user = firebase.auth().currentUser;
+  const ref = firebase.firestore().collection("tasks").doc(id);
+  const doc = await ref.get();
+  const task = doc.data();
 
-    if (!user) return showPopup("Login required");
+  if (task.ownerId === user.uid)
+    return showPopup("You cannot accept your own task");
 
-    // ❌ BLOCK OWNER
-    if (task.ownerId === user.uid) {
-      return showPopup("You cannot accept your own task");
-    }
+  if (task.status !== "pending")
+    return showPopup("Task already taken");
 
-    if (task.status !== "pending") {
-      return showPopup("Task already taken");
-    }
+  await ref.update({
+    status: "accepted",
+    workerId: user.uid
+  });
 
-    await ref.update({
-      status: "accepted",
-      workerId: user.uid
-    });
-
-    showPopup("Task accepted");
-
-  } catch (err) {
-    console.error(err);
-    showPopup("Error accepting task");
-  }
+  showPopup("Task accepted");
 }
 
 // ===============================
-// SUBMIT TASK (WORKER DONE)
+// SUBMIT TASK
 // ===============================
 async function submitTask(id) {
-  try {
-    const ref = firebase.firestore().collection("tasks").doc(id);
-    const doc = await ref.get();
-    const task = doc.data();
+  const user = firebase.auth().currentUser;
 
-    const user = firebase.auth().currentUser;
+  const ref = firebase.firestore().collection("tasks").doc(id);
+  const doc = await ref.get();
+  const task = doc.data();
 
-    if (!user) return showPopup("Login required");
+  if (task.workerId !== user.uid)
+    return showPopup("Only worker can submit");
 
-    // 🔒 ONLY WORKER CAN SUBMIT
-    if (task.workerId !== user.uid) {
-      return showPopup("Only worker can submit this task");
-    }
+  await ref.update({
+    status: "submitted"
+  });
 
-    await ref.update({
-      status: "submitted"
-    });
-
-    showPopup("Submitted for review");
-
-  } catch (err) {
-    console.error(err);
-    showPopup("Submit failed");
-  }
+  showPopup("Submitted for review");
 }
 
 // ===============================
-// CONFIRM TASK (OWNER RELEASE ESCROW)
+// CONFIRM TASK (ESCROW RELEASE)
 // ===============================
 async function confirmTask(id) {
-  try {
-    const ref = firebase.firestore().collection("tasks").doc(id);
-    const doc = await ref.get();
-    const task = doc.data();
+  const user = firebase.auth().currentUser;
 
-    const user = firebase.auth().currentUser;
+  const ref = firebase.firestore().collection("tasks").doc(id);
+  const doc = await ref.get();
+  const task = doc.data();
 
-    if (!user) return showPopup("Login required");
+  if (task.ownerId !== user.uid)
+    return showPopup("Only owner can confirm");
 
-    // 🔒 ONLY OWNER CAN CONFIRM
-    if (task.ownerId !== user.uid) {
-      return showPopup("Only task owner can confirm payment");
-    }
+  if (task.status !== "submitted")
+    return showPopup("Not ready");
 
-    if (task.status !== "submitted") {
-      return showPopup("Task not ready for confirmation");
-    }
+  const earnings = Math.floor(task.amount * 0.9);
 
-    const earnings = Math.floor(task.amount * 0.9);
+  await ref.update({
+    status: "completed"
+  });
 
-    await ref.update({
-      status: "completed"
+  showPopup("Paid ₦" + earnings);
+}
+
+// ===============================
+// CHAT SYSTEM
+// ===============================
+function openChat(taskId) {
+  currentChatTaskId = taskId;
+
+  const chat = document.getElementById("chatSection");
+  if (chat) chat.style.display = "block";
+
+  loadChat(taskId);
+}
+
+async function sendMessage(taskId) {
+  const input = document.getElementById("chatInput");
+  const text = input.value;
+  if (!text) return;
+
+  const user = firebase.auth().currentUser;
+
+  await firebase.firestore()
+    .collection("chats")
+    .doc(taskId)
+    .collection("messages")
+    .add({
+      senderId: user.uid,
+      text,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    showPopup("Payment released: ₦" + earnings);
-
-  } catch (err) {
-    console.error(err);
-    showPopup("Confirmation failed");
-  }
+  input.value = "";
 }
+
+function sendCurrentMessage() {
+  if (!currentChatTaskId) return;
+  sendMessage(currentChatTaskId);
+}
+
+function loadChat(taskId) {
+  const chatBox = document.getElementById("chatBox");
+  if (!chatBox) return;
+
+  firebase.firestore()
+    .collection("chats")
+    .doc(taskId)
+    .collection("messages")
+    .orderBy("createdAt")
+    .onSnapshot(snapshot => {
+
+      chatBox.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const isMe = msg.senderId === currentUser.uid;
+
+        chatBox.innerHTML += `
+          <div style="text-align:${isMe ? "right" : "left"};">
+            <span style="
+              display:inline-block;
+              padding:8px;
+              margin:5px;
+              border-radius:10px;
+              background:${isMe ? "#6c4cff" : "#eee"};
+              color:${isMe ? "#fff" : "#000"};
+            ">
+              ${msg.text}
+            </span>
+          </div>
+        `;
+      });
+
+    });
+}
+
+// ===============================
+// WALLET + UI (STUBS)
+// ===============================
+function updateWallet() {}
+function setGreeting() {}
