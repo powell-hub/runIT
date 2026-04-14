@@ -3,6 +3,23 @@
 <head>
   <title>Login - RunIT</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- simple icon style -->
+  <style>
+    .password-wrapper {
+      position: relative;
+    }
+
+    .toggle-eye {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 18px;
+      user-select: none;
+    }
+  </style>
 </head>
 
 <body>
@@ -20,8 +37,13 @@
     <input id="email" placeholder="Email"
       style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
-    <input id="password" type="password" placeholder="Password"
-      style="width:100%; padding:12px; border-radius:8px; border:1px solid #ccc;">
+    <!-- PASSWORD WITH EYE -->
+    <div class="password-wrapper">
+      <input id="password" type="password" placeholder="Password"
+        style="width:100%; padding:12px; border-radius:8px; border:1px solid #ccc;">
+
+      <span class="toggle-eye" onclick="togglePassword()">👁️</span>
+    </div>
 
   </div>
 
@@ -66,7 +88,18 @@ function showPopup(message) {
   }, 2000);
 }
 
-// LOGIN (FIXED + CONSISTENT WITH AUTH)
+// TOGGLE PASSWORD 👁️
+function togglePassword() {
+  const input = document.getElementById("password");
+
+  if (input.type === "password") {
+    input.type = "text";
+  } else {
+    input.type = "password";
+  }
+}
+
+// LOGIN
 function handleLogin() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
@@ -76,9 +109,8 @@ function handleLogin() {
     return;
   }
 
-  auth.signInWithEmailAndPassword(email, password)
-    .then((userCredential) => {
-
+  firebase.auth().signInWithEmailAndPassword(email, password)
+    .then(() => {
       showPopup("Login successful");
 
       setTimeout(() => {
