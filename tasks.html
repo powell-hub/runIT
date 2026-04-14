@@ -1,21 +1,143 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tasks</title>
+  <title>Available Tasks - RunIT</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      background: #f6f7fb;
+    }
+
+    .task-container {
+      padding: 15px;
+    }
+
+    .task-card {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      transition: 0.2s;
+    }
+
+    .task-card:hover {
+      transform: scale(1.02);
+    }
+
+    .task-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .task-info {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .task-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .badge {
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .open {
+      background: #e6f7ff;
+      color: #0077ff;
+    }
+
+    .taken {
+      background: #ffe6e6;
+      color: #ff3b3b;
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 8px;
+      background: #6c4cff;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .header {
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
 
-<div id="taskList"></div>
+  <div class="header">📋 Available Tasks</div>
 
+  <div class="task-container" id="taskList">
+    Loading tasks...
+  </div>
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<script src="firebase.js"></script>
-<script src="script.js"></script>
+  <script src="firebase.js"></script>
+
+  <script>
+    const taskList = document.getElementById("taskList");
+
+    firebase.firestore().collection("tasks").onSnapshot(snapshot => {
+      taskList.innerHTML = "";
+
+      if (snapshot.empty) {
+        taskList.innerHTML = "<p>No tasks available</p>";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const task = doc.data();
+
+        taskList.innerHTML += `
+          <div class="task-card">
+
+            <div class="task-title">${task.title || "Untitled Task"}</div>
+
+            <div class="task-info">
+              ₦${task.price || 0} • ${task.description || "No description"}
+            </div>
+
+            <div class="task-bottom">
+
+              <span class="badge ${task.status === "taken" ? "taken" : "open"}">
+                ${task.status || "open"}
+              </span>
+
+              <button class="btn" onclick="alert('Task action coming soon')">
+                View
+              </button>
+
+            </div>
+
+          </div>
+        `;
+      });
+    });
+  </script>
 
 </body>
 </html>
