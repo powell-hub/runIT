@@ -31,7 +31,6 @@ function showPopup(message) {
 
   popup.innerText = message;
   popup.style.display = "block";
-
   setTimeout(() => popup.style.display = "none", 2000);
 }
 
@@ -48,10 +47,9 @@ firebase.auth().onAuthStateChanged((user) => {
     return;
   }
 
-  if (user) {
-    currentUser = user;
-    initApp();
-  }
+  currentUser = user;
+
+  if (user) initApp();
 });
 
 // ===============================
@@ -59,8 +57,6 @@ firebase.auth().onAuthStateChanged((user) => {
 // ===============================
 function initApp() {
   displayTasks();
-  updateWallet();
-  setGreeting();
 }
 
 // ===============================
@@ -91,7 +87,7 @@ async function postTask() {
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  showPopup("Task posted (Escrow locked)");
+  showPopup("Task posted");
 }
 
 // ===============================
@@ -106,16 +102,18 @@ function displayTasks() {
   _taskListener = firebase.firestore()
     .collection("tasks")
     .orderBy("createdAt", "desc")
-    .onSnapshot((snapshot) => {
+    .onSnapshot(snapshot => {
 
       taskList.innerHTML = "";
 
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const task = doc.data();
         const id = doc.id;
 
-        const uid = currentUser?.uid;
+        // remove completed from feed
+        if (task.status === "completed") return;
 
+        const uid = currentUser?.uid;
         const isOwner = uid === task.ownerId;
         const isWorker = uid === task.workerId;
 
@@ -123,14 +121,14 @@ function displayTasks() {
           <div class="task">
             <p>${task.text}</p>
             <strong>₦${task.amount}</strong><br>
-            <small>Status: ${task.status}</small><br><br>
+            <small>${task.status}</small><br><br>
 
             ${task.status === "pending" && !isOwner ? `
               <button onclick="acceptTask('${id}')">Accept</button>
             ` : ""}
 
             ${task.status === "accepted" && isWorker ? `
-              <button onclick="submitTask('${id}')">Submit Work</button>
+              <button onclick="submitTask('${id}')">Submit</button>
             ` : ""}
 
             ${task.status === "submitted" && isOwner ? `
@@ -151,7 +149,7 @@ function displayTasks() {
 // ACCEPT TASK
 // ===============================
 async function acceptTask(id) {
-  const user = firebase.auth().currentUser;
+  const user = currentUser;
   if (!user) return showPopup("Login required");
 
   const ref = firebase.firestore().collection("tasks").doc(id);
@@ -159,31 +157,31 @@ async function acceptTask(id) {
   const task = doc.data();
 
   if (task.ownerId === user.uid)
-    return showPopup("You cannot accept your own task");
+    return showPopup("Cannot accept your own task");
 
   if (task.status !== "pending")
-    return showPopup("Task already taken");
+    return showPopup("Already taken");
 
   await ref.update({
     status: "accepted",
     workerId: user.uid
   });
 
-  showPopup("Task accepted");
+  showPopup("Accepted");
 }
 
 // ===============================
 // SUBMIT TASK
 // ===============================
 async function submitTask(id) {
-  const user = firebase.auth().currentUser;
+  const user = currentUser;
 
   const ref = firebase.firestore().collection("tasks").doc(id);
   const doc = await ref.get();
   const task = doc.data();
 
   if (task.workerId !== user.uid)
-    return showPopup("Only worker can submit");
+    return showPopup("Not your task");
 
   await ref.update({
     status: "submitted"
@@ -196,7 +194,7 @@ async function submitTask(id) {
 // CONFIRM TASK (ESCROW RELEASE)
 // ===============================
 async function confirmTask(id) {
-  const user = firebase.auth().currentUser;
+  const user = currentUser;
 
   const ref = firebase.firestore().collection("tasks").doc(id);
   const doc = await ref.get();
@@ -223,35 +221,25 @@ async function confirmTask(id) {
 function openChat(taskId) {
   currentChatTaskId = taskId;
 
-  const chat = document.getElementById("chatSection");
-  if (chat) chat.style.display = "block";
-
+  document.getElementById("chatSection").style.display = "block";
   loadChat(taskId);
 }
 
-async function sendMessage(taskId) {
+function sendCurrentMessage() {
   const input = document.getElementById("chatInput");
-  const text = input.value;
-  if (!text) return;
+  if (!input.value) return;
 
-  const user = firebase.auth().currentUser;
-
-  await firebase.firestore()
+  firebase.firestore()
     .collection("chats")
-    .doc(taskId)
+    .doc(currentChatTaskId)
     .collection("messages")
     .add({
-      senderId: user.uid,
-      text,
+      senderId: currentUser.uid,
+      text: input.value,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
   input.value = "";
-}
-
-function sendCurrentMessage() {
-  if (!currentChatTaskId) return;
-  sendMessage(currentChatTaskId);
 }
 
 function loadChat(taskId) {
@@ -269,17 +257,17 @@ function loadChat(taskId) {
 
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const isMe = msg.senderId === currentUser.uid;
+        const me = msg.senderId === currentUser.uid;
 
         chatBox.innerHTML += `
-          <div style="text-align:${isMe ? "right" : "left"};">
+          <div style="text-align:${me ? "right" : "left"}">
             <span style="
               display:inline-block;
               padding:8px;
               margin:5px;
               border-radius:10px;
-              background:${isMe ? "#6c4cff" : "#eee"};
-              color:${isMe ? "#fff" : "#000"};
+              background:${me ? "#6c4cff" : "#eee"};
+              color:${me ? "#fff" : "#000"};
             ">
               ${msg.text}
             </span>
@@ -289,9 +277,3 @@ function loadChat(taskId) {
 
     });
 }
-
-// ===============================
-// WALLET + UI (STUBS)
-// ===============================
-function updateWallet() {}
-function setGreeting() {}
