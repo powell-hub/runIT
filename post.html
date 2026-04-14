@@ -7,74 +7,98 @@
 
 <body>
 
-<!-- POPUP -->
-<div id="popup" style="
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #6c4cff;
-  color: white;
-  padding: 15px 25px;
-  border-radius: 10px;
-  display: none;
-  z-index: 9999;
-"></div>
-
 <div class="app">
 
-  <!-- HEADER -->
   <div class="header">
-    <div>Post Task</div>
+    <div>Post a Task</div>
   </div>
 
-  <!-- FORM -->
   <div class="card">
 
-    <input 
-      id="taskInput" 
-      type="text" 
-      placeholder="What do you need done?"
-      style="width:100%; padding:10px; margin-bottom:10px;"
-    >
+    <!-- TASK TITLE -->
+    <input id="title" placeholder="Task Title"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
-    <input 
-      id="amountInput" 
-      type="number" 
-      placeholder="Enter amount (₦)"
-      style="width:100%; padding:10px;"
-    >
+    <!-- DESCRIPTION -->
+    <input id="description" placeholder="Task Description"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+
+    <!-- PRICE -->
+    <input id="price" type="number" placeholder="Amount (₦)"
+      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
   </div>
 
-  <!-- BUTTON -->
-  <button class="main-btn" onclick="postTask()">
-    Post Task
-  </button>
+  <button class="main-btn" onclick="postTask()">Post Task</button>
 
-  <!-- NAV -->
-  <div class="nav">
-    <div onclick="location.href='index.html'">🏠 Home</div>
-    <div onclick="location.href='tasks.html'">📋 Tasks</div>
-    <div onclick="location.href='wallet.html'">💳 Wallet</div>
-  </div>
+  <div id="popup" style="
+    display:none;
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:black;
+    color:white;
+    padding:10px 20px;
+    border-radius:8px;
+  "></div>
 
 </div>
 
-<!-- =========================
-     SCRIPTS (FIXED ORDER)
-========================= -->
-
-<!-- Firebase Core -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<!-- Firebase Config -->
 <script src="firebase.js"></script>
 
-<!-- App Logic -->
-<script src="script.js"></script>
+<script>
+function showPopup(message) {
+  const popup = document.getElementById("popup");
+  popup.innerText = message;
+  popup.style.display = "block";
+
+  setTimeout(() => {
+    popup.style.display = "none";
+  }, 2000);
+}
+
+function postTask() {
+  const title = document.getElementById("title").value.trim();
+  const description = document.getElementById("description").value.trim();
+  const price = document.getElementById("price").value.trim();
+
+  if (!title || !description || !price) {
+    showPopup("Fill all fields");
+    return;
+  }
+
+  const user = firebase.auth().currentUser;
+
+  if (!user) {
+    showPopup("Login required");
+    return;
+  }
+
+  firebase.firestore().collection("tasks").add({
+    title: title,
+    description: description,
+    price: Number(price),
+    status: "open",
+    createdBy: user.uid,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  })
+  .then(() => {
+    showPopup("Task posted!");
+    setTimeout(() => {
+      window.location.href = "tasks.html";
+    }, 1000);
+  })
+  .catch(err => {
+    showPopup(err.message);
+  });
+}
+</script>
 
 </body>
 </html>
