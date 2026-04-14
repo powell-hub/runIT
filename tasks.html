@@ -81,7 +81,6 @@
       font-weight: bold;
     }
 
-    /* POPUP */
     #popup {
       position: fixed;
       top: 20px;
@@ -127,24 +126,42 @@
       }, 2000);
     }
 
-    // VIEW TASK FUNCTION (FIXED)
-    function viewTask(taskId) {
-      firebase.firestore().collection("tasks").doc(taskId).get()
-        .then((doc) => {
-          if (!doc.exists) {
-            showPopup("Task not found");
-            return;
-          }
+    // ACCEPT TASK (REAL SYSTEM)
+    function acceptTask(taskId) {
+      const user = firebase.auth().currentUser;
 
-          const task = doc.data();
+      if (!user) {
+        showPopup("Login required");
+        return;
+      }
 
-          showPopup(
-            task.title || task.text || task.taskName || "Untitled Task"
-          );
-        })
-        .catch(err => {
-          showPopup(err.message);
+      const taskRef = firebase.firestore().collection("tasks").doc(taskId);
+
+      firebase.firestore().runTransaction(async (transaction) => {
+        const doc = await transaction.get(taskRef);
+
+        if (!doc.exists) {
+          throw "Task not found";
+        }
+
+        const task = doc.data();
+
+        if (task.status === "taken") {
+          throw "Task already taken";
+        }
+
+        transaction.update(taskRef, {
+          status: "taken",
+          takenBy: user.uid,
+          takenAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+      })
+      .then(() => {
+        showPopup("Task accepted");
+      })
+      .catch(err => {
+        showPopup(err.toString());
+      });
     }
 
     // LOAD TASKS
@@ -173,12 +190,16 @@
             <div class="task-bottom">
 
               <span class="badge ${task.status === "taken" ? "taken" : "open"}">
-                ${task.status || "open"}
+                ${task.status === "taken" ? "TAKEN" : "OPEN"}
               </span>
 
-              <button class="btn" onclick="viewTask('${doc.id}')">
-                View
-              </button>
+              ${task.status === "open" ? `
+                <button class="btn" onclick="acceptTask('${doc.id}')">
+                  Accept
+                </button>
+              ` : `
+                <span style="font-size:12px; color:#999;">Taken</span>
+              `}
 
             </div>
 
