@@ -11,7 +11,6 @@ body {
   margin: auto;
   background: #f5f6fa;
   min-height: 100vh;
-  border-radius: 0;
   padding-bottom: 100px;
 }
 
@@ -19,9 +18,12 @@ body {
 .header {
   display: flex;
   justify-content: space-between;
-  padding: 20px;
+  align-items: center;
+  padding: 18px 20px;
   font-weight: bold;
   font-size: 18px;
+  background: white;
+  border-bottom: 1px solid #eee;
 }
 
 /* LOGO */
@@ -29,50 +31,70 @@ body {
   color: #6c4cff;
 }
 
-/* CARD */
+/* CARD (WALLET ETC) */
 .card {
   background: white;
   margin: 15px 20px;
   padding: 20px;
-  border-radius: 15px;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-/* ACTION BUTTONS */
-.action {
-  margin: 15px 20px;
-  padding: 18px;
-  border-radius: 15px;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.get-help {
-  background: #e7e6fb;
-}
-
-.earn {
-  background: #f4e7d3;
-}
-
-.wallet {
-  background: #d7eadf;
-}
-
-/* TASK */
-.task {
+/* TASK CARD (IMPORTANT UPGRADE) */
+.task-card {
   background: white;
-  margin: 15px 20px;
-  padding: 20px;
-  border-radius: 15px;
+  margin: 12px 20px;
+  padding: 15px;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  transition: 0.2s ease;
 }
 
-.task button {
-  background: #6c4cff;
-  color: white;
+.task-card:hover {
+  transform: translateY(-2px);
+}
+
+/* TASK TEXT */
+.task-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #111;
+}
+
+/* TASK META */
+.task-meta {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+/* BUTTON GROUP */
+.task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* BUTTON BASE */
+.task-actions button {
   border: none;
-  padding: 10px 18px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+/* BUTTONS */
+.btn.green { background: #2ecc71; color: white; }
+.btn.blue { background: #3498db; color: white; }
+.btn.purple { background: #9b59b6; color: white; }
+.btn.dark { background: #444; color: white; }
+
+/* BUTTON HOVER */
+.task-actions button:hover {
+  opacity: 0.85;
 }
 
 /* MAIN BUTTON */
@@ -107,4 +129,25 @@ body {
   text-align: center;
   font-size: 14px;
   cursor: pointer;
+}
+
+/* CHAT UI */
+#chatBox {
+  background: white;
+  margin: 15px 20px;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+#chatInput {
+  margin-left: 20px;
+  padding: 10px;
+  width: calc(100% - 160px);
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+button {
+  font-family: inherit;
 }
