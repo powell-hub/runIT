@@ -23,13 +23,27 @@
     <input id="email" placeholder="Email"
       style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
-    <input id="password" type="password" placeholder="Password"
-      style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+    <!-- PASSWORD -->
+    <div style="position:relative;">
+      <input id="password" type="password" placeholder="Password"
+        style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+      <span onclick="togglePassword('password')" 
+        style="position:absolute; right:10px; top:12px; cursor:pointer;">👁</span>
+    </div>
 
+    <!-- CONFIRM PASSWORD -->
+    <div style="position:relative;">
+      <input id="confirmPassword" type="password" placeholder="Confirm Password"
+        style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
+      <span onclick="togglePassword('confirmPassword')" 
+        style="position:absolute; right:10px; top:12px; cursor:pointer;">👁</span>
+    </div>
+
+    <!-- EXTRA PROFILE -->
     <input id="hostel" placeholder="Hostel"
       style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
-    <input id="level" placeholder="Level (e.g. 100, 200)"
+    <input id="level" placeholder="Level"
       style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ccc;">
 
     <input id="department" placeholder="Department"
@@ -69,6 +83,7 @@
 <script src="firebase.js"></script>
 
 <script>
+// POPUP
 function showPopup(message) {
   const popup = document.getElementById("popup");
   popup.innerText = message;
@@ -79,18 +94,30 @@ function showPopup(message) {
   }, 2000);
 }
 
-// SIGNUP (FULL PROFILE SYSTEM)
+// TOGGLE PASSWORD VISIBILITY
+function togglePassword(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === "password" ? "text" : "password";
+}
+
+// SIGNUP
 function signup() {
   const username = document.getElementById("username").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
+  const confirmPassword = document.getElementById("confirmPassword").value.trim();
   const hostel = document.getElementById("hostel").value.trim();
   const level = document.getElementById("level").value.trim();
   const department = document.getElementById("department").value.trim();
   const phone = document.getElementById("phone").value.trim();
 
-  if (!username || !email || !password || !hostel || !level || !department || !phone) {
+  if (!username || !email || !password || !confirmPassword || !hostel || !level || !department || !phone) {
     showPopup("Fill all fields");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showPopup("Passwords do not match");
     return;
   }
 
@@ -99,7 +126,6 @@ function signup() {
 
       const user = userCredential.user;
 
-      // SAVE FULL PROFILE IN FIRESTORE
       await firebase.firestore().collection("users").doc(user.uid).set({
         username,
         email,
@@ -110,7 +136,6 @@ function signup() {
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      // SAVE DISPLAY NAME IN AUTH
       await user.updateProfile({
         displayName: username
       });
