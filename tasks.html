@@ -7,6 +7,7 @@
 
 <body>
 
+<!-- POPUP -->
 <div id="popup" style="
   position: fixed;
   top: 20px;
@@ -22,6 +23,7 @@
 
 <div class="app">
 
+  <!-- HEADER -->
   <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
     <div>Available Tasks</div>
 
@@ -36,8 +38,44 @@
     </button>
   </div>
 
+  <!-- TASK LIST -->
   <div id="taskList"></div>
 
+  <!-- 🔥 CHAT SECTION (NEW) -->
+  <div id="chatSection" style="
+    display:none;
+    margin-top:20px;
+    border-top:1px solid #ccc;
+    padding-top:15px;
+  ">
+    <h3>Task Chat</h3>
+
+    <div id="chatBox" style="
+      height:200px;
+      overflow-y:auto;
+      border:1px solid #ccc;
+      padding:10px;
+      margin-bottom:10px;
+      background:#fafafa;
+    "></div>
+
+    <input id="chatInput" placeholder="Type message..." style="
+      width:70%;
+      padding:8px;
+    " />
+
+    <button onclick="sendCurrentMessage()" style="
+      padding:8px 12px;
+      background:#6c4cff;
+      color:white;
+      border:none;
+      border-radius:6px;
+    ">
+      Send
+    </button>
+  </div>
+
+  <!-- NAVIGATION -->
   <div class="nav">
     <div onclick="location.href='index.html'">🏠 Home</div>
     <div>📋 Tasks</div>
@@ -61,11 +99,10 @@
 <script>
 window.addEventListener("load", () => {
   setTimeout(() => {
-    if (typeof loadData === "function") loadData();
     if (typeof displayTasks === "function") displayTasks();
   }, 300);
 });
 </script>
-  
+
 </body>
 </html>
