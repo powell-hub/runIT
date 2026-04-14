@@ -4,6 +4,7 @@
 let currentUser = null;
 let _taskListener = null;
 let currentChatTaskId = null;
+let _chatListener = null;
 
 // ===============================
 // POPUP SYSTEM
@@ -35,7 +36,7 @@ function showPopup(message) {
 }
 
 // ===============================
-// AUTH STATE
+// AUTH
 // ===============================
 firebase.auth().onAuthStateChanged((user) => {
   const page = window.location.pathname;
@@ -91,7 +92,7 @@ async function postTask() {
 }
 
 // ===============================
-// DISPLAY TASKS
+// DISPLAY TASKS (CLEAN + SAFE)
 // ===============================
 function displayTasks() {
   const taskList = document.getElementById("taskList");
@@ -110,7 +111,7 @@ function displayTasks() {
         const task = doc.data();
         const id = doc.id;
 
-        // remove completed from feed
+        // ❌ hide completed everywhere
         if (task.status === "completed") return;
 
         const uid = currentUser?.uid;
@@ -119,9 +120,10 @@ function displayTasks() {
 
         taskList.innerHTML += `
           <div class="task">
+
             <p>${task.text}</p>
             <strong>₦${task.amount}</strong><br>
-            <small>${task.status}</small><br><br>
+            <small>Status: ${task.status}</small><br><br>
 
             ${task.status === "pending" && !isOwner ? `
               <button onclick="acceptTask('${id}')">Accept</button>
@@ -138,6 +140,7 @@ function displayTasks() {
             ${(isOwner || isWorker) ? `
               <button onclick="openChat('${id}')">Chat</button>
             ` : ""}
+
           </div>
         `;
       });
@@ -153,8 +156,7 @@ async function acceptTask(id) {
   if (!user) return showPopup("Login required");
 
   const ref = firebase.firestore().collection("tasks").doc(id);
-  const doc = await ref.get();
-  const task = doc.data();
+  const task = (await ref.get()).data();
 
   if (task.ownerId === user.uid)
     return showPopup("Cannot accept your own task");
@@ -167,7 +169,7 @@ async function acceptTask(id) {
     workerId: user.uid
   });
 
-  showPopup("Accepted");
+  showPopup("Task accepted");
 }
 
 // ===============================
@@ -177,8 +179,7 @@ async function submitTask(id) {
   const user = currentUser;
 
   const ref = firebase.firestore().collection("tasks").doc(id);
-  const doc = await ref.get();
-  const task = doc.data();
+  const task = (await ref.get()).data();
 
   if (task.workerId !== user.uid)
     return showPopup("Not your task");
@@ -197,8 +198,7 @@ async function confirmTask(id) {
   const user = currentUser;
 
   const ref = firebase.firestore().collection("tasks").doc(id);
-  const doc = await ref.get();
-  const task = doc.data();
+  const task = (await ref.get()).data();
 
   if (task.ownerId !== user.uid)
     return showPopup("Only owner can confirm");
@@ -209,25 +209,36 @@ async function confirmTask(id) {
   const earnings = Math.floor(task.amount * 0.9);
 
   await ref.update({
-    status: "completed"
+    status: "completed",
+    paidAmount: earnings,
+    paidAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
   showPopup("Paid ₦" + earnings);
 }
 
 // ===============================
-// CHAT SYSTEM
+// CHAT SYSTEM (FIXED)
 // ===============================
 function openChat(taskId) {
   currentChatTaskId = taskId;
 
-  document.getElementById("chatSection").style.display = "block";
+  const chatSection = document.getElementById("chatSection");
+  const chatBox = document.getElementById("chatBox");
+
+  if (!chatSection || !chatBox) {
+    showPopup("Chat UI missing");
+    return;
+  }
+
+  chatSection.style.display = "block";
   loadChat(taskId);
 }
 
+// ===============================
 function sendCurrentMessage() {
   const input = document.getElementById("chatInput");
-  if (!input.value) return;
+  if (!input || !input.value) return;
 
   firebase.firestore()
     .collection("chats")
@@ -242,11 +253,14 @@ function sendCurrentMessage() {
   input.value = "";
 }
 
+// ===============================
 function loadChat(taskId) {
   const chatBox = document.getElementById("chatBox");
   if (!chatBox) return;
 
-  firebase.firestore()
+  if (_chatListener) _chatListener();
+
+  _chatListener = firebase.firestore()
     .collection("chats")
     .doc(taskId)
     .collection("messages")
