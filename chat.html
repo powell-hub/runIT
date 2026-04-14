@@ -2,33 +2,71 @@
 <html>
 <head>
   <title>Chat</title>
-  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="app">
+<div id="chatBox" style="height:400px; overflow:auto; border:1px solid #ccc;"></div>
 
-  <div class="header">
-    <div>Task Chat</div>
-    <button onclick="location.href='tasks.html'">Back</button>
-  </div>
-
-  <div id="chatBox" style="
-    height:400px;
-    overflow-y:auto;
-    border:1px solid #ccc;
-    padding:10px;
-    margin-bottom:10px;
-  "></div>
-
-  <input id="chatInput" placeholder="Type message..." style="width:70%;" />
-  <button onclick="sendMessageFromPage()">Send</button>
-
-</div>
+<input id="chatInput" placeholder="Message..." />
+<button onclick="sendMessage()">Send</button>
 
 <script src="firebase.js"></script>
 <script src="script.js"></script>
+
+<script>
+const taskId = new URLSearchParams(window.location.search).get("taskId");
+
+firebase.auth().onAuthStateChanged(() => {
+  loadChat();
+});
+
+function sendMessage() {
+  const input = document.getElementById("chatInput");
+
+  if (!input.value) return;
+
+  firebase.firestore()
+    .collection("chats")
+    .doc(taskId)
+    .collection("messages")
+    .add({
+      senderId: firebase.auth().currentUser.uid,
+      text: input.value,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+  input.value = "";
+}
+
+function loadChat() {
+  const chatBox = document.getElementById("chatBox");
+
+  firebase.firestore()
+    .collection("chats")
+    .doc(taskId)
+    .collection("messages")
+    .orderBy("createdAt")
+    .onSnapshot(snapshot => {
+
+      chatBox.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const me = msg.senderId === firebase.auth().currentUser.uid;
+
+        chatBox.innerHTML += `
+          <div style="text-align:${me ? "right" : "left"}">
+            <div style="display:inline-block;padding:8px;margin:5px;background:${me ? "#6c4cff" : "#eee"};color:${me ? "#fff" : "#000"}">
+              ${msg.text}
+            </div>
+          </div>
+        `;
+      });
+
+    });
+}
+</script>
 
 </body>
 </html>
