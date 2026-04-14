@@ -39,7 +39,7 @@
       <h1>₦<span id="balance">0</span></h1>
     </div>
 
-    <!-- DASHBOARD (THIS IS WHERE YOUR SECOND CODE GOES) -->
+    <!-- DASHBOARD -->
     <div class="dashboard">
 
       <div onclick="location.href='post.html'" class="card">
@@ -68,6 +68,32 @@
 
 <script src="firebase.js"></script>
 <script src="script.js"></script>
-  
+
+<!-- ✅ ADDED GREETING LOGIC -->
+<script>
+firebase.auth().onAuthStateChanged((user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  firebase.firestore().collection("users").doc(user.uid).get()
+    .then((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        const firstName = data.username.split(" ")[0];
+
+        document.getElementById("greeting").innerText =
+          "HELLO " + firstName.toUpperCase();
+      } else {
+        document.getElementById("greeting").innerText = "HELLO USER";
+      }
+    })
+    .catch(() => {
+      document.getElementById("greeting").innerText = "HELLO USER";
+    });
+});
+</script>
+
 </body>
 </html>
