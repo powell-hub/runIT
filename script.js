@@ -156,15 +156,33 @@ function displayTasks() {
 // ===============================
 async function acceptTask(id) {
   try {
-    await firebase.firestore().collection("tasks").doc(id).update({
+    const ref = firebase.firestore().collection("tasks").doc(id);
+    const doc = await ref.get();
+    const task = doc.data();
+
+    const user = firebase.auth().currentUser;
+
+    if (!user) return showPopup("Login required");
+
+    // ❌ BLOCK OWNER
+    if (task.ownerId === user.uid) {
+      return showPopup("You cannot accept your own task");
+    }
+
+    if (task.status !== "pending") {
+      return showPopup("Task already taken");
+    }
+
+    await ref.update({
       status: "accepted",
-      workerId: currentUser.uid
+      workerId: user.uid
     });
 
     showPopup("Task accepted");
+
   } catch (err) {
     console.error(err);
-    showPopup("Accept failed");
+    showPopup("Error accepting task");
   }
 }
 
