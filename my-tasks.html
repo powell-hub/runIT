@@ -111,6 +111,25 @@
             container.innerHTML += `
               <div class="task-card">
 
+           if (task.status === "taken" && task.takenBy) {
+
+  firebase.firestore()
+    .collection("users")
+    .doc(task.takenBy)
+    .get()
+    .then(userDoc => {
+      const userData = userDoc.data();
+
+      document.getElementById(`user-${doc.id}`).innerText =
+        "Accepted by: " + (userData?.username || "Unknown user");
+    })
+    .catch(() => {
+      document.getElementById(`user-${doc.id}`).innerText =
+        "Accepted by: Unknown";
+    });
+
+}
+
                 <div class="task-title">
                   ${task.title || "Untitled Task"}
                 </div>
