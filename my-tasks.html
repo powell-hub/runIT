@@ -126,7 +126,9 @@
                 ${
                   task.status === "taken"
                   ? `<div style="margin-top:5px; font-size:12px;">
-                      Accepted by: ${task.takenBy}
+                      <div id="user-${doc.id}" style="margin-top:5px; font-size:12px;">
+  Loading user...
+</div>
                     </div>`
                   : `<div style="margin-top:5px; font-size:12px; color:#999;">
                       Waiting for someone to accept
