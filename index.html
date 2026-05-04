@@ -32,8 +32,8 @@
         <div id="greeting" style="font-size:14px; color:#666;">Loading...</div>
       </div>
 
-      <!-- LOGOUT -->
-      <button onclick="logout()" 
+      <!-- ✅ FIXED LOGOUT BUTTON -->
+      <button id="logoutBtn"
         style="padding:6px 10px; border:none; border-radius:6px; background:#ff4d4d; color:white;">
         Logout
       </button>
@@ -61,7 +61,7 @@
       </div>
 
       <div onclick="location.href='my-tasks.html'" class="card">
-  📌 My Tasks
+        📌 My Tasks
       </div>
       
     </div>
@@ -69,51 +69,75 @@
   </div>
 
   <!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<script src="firebase.js"></script>
-<script src="script.js"></script>
+  <!-- Your config -->
+  <script src="firebase.js"></script>
 
-<!-- 🔥 FIXED GREETING LOGIC -->
-<script>
-firebase.auth().onAuthStateChanged((user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
+  <!-- ✅ FIXED SCRIPT -->
+  <script>
+    // 🔐 Logout function
+    function logout() {
+      firebase.auth().signOut()
+        .then(() => {
+          console.log("Logged out");
+          window.location.href = "login.html";
+        })
+        .catch((error) => {
+          console.error("Logout error:", error);
+        });
+    }
 
-  const greetingEl = document.getElementById("greeting");
+    // ✅ Attach event AFTER page loads
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("logoutBtn");
 
-  firebase.firestore().collection("users").doc(user.uid).get()
-    .then((doc) => {
-
-      let name = "";
-
-      if (doc.exists && doc.data().username) {
-        name = doc.data().username;
-      } else if (user.displayName) {
-        name = user.displayName;
+      if (btn) {
+        btn.addEventListener("click", logout);
       } else {
-        greetingEl.innerText = "HELLO USER";
+        console.error("Logout button not found");
+      }
+    });
+
+    // 🔥 AUTH + GREETING
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        window.location.href = "login.html";
         return;
       }
 
-      const firstName = name.split(" ")[0];
-      greetingEl.innerText = "HELLO " + firstName.toUpperCase();
+      const greetingEl = document.getElementById("greeting");
 
-    })
-    .catch(() => {
-      if (user.displayName) {
-        const firstName = user.displayName.split(" ")[0];
-        greetingEl.innerText = "HELLO " + firstName.toUpperCase();
-      } else {
-        greetingEl.innerText = "HELLO USER";
-      }
+      firebase.firestore().collection("users").doc(user.uid).get()
+        .then((doc) => {
+
+          let name = "";
+
+          if (doc.exists && doc.data().username) {
+            name = doc.data().username;
+          } else if (user.displayName) {
+            name = user.displayName;
+          } else {
+            greetingEl.innerText = "HELLO USER";
+            return;
+          }
+
+          const firstName = name.split(" ")[0];
+          greetingEl.innerText = "HELLO " + firstName.toUpperCase();
+
+        })
+        .catch(() => {
+          if (user.displayName) {
+            const firstName = user.displayName.split(" ")[0];
+            greetingEl.innerText = "HELLO " + firstName.toUpperCase();
+          } else {
+            greetingEl.innerText = "HELLO USER";
+          }
+        });
     });
-});
-</script>
+  </script>
 
 </body>
 </html>
