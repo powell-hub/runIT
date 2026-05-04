@@ -7,82 +7,53 @@
 
 <body>
 
-  <!-- POPUP -->
-  <div id="popup" style="
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #6c4cff;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 10px;
-    display: none;
-    z-index: 9999;
-  "></div>
-
-  <div class="app">
-
-    <!-- HEADER -->
-    <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
-      
-      <!-- LEFT SIDE -->
-      <div>
-        <div>RunIT</div>
-        <div id="greeting" style="font-size:14px; color:#666;">Loading...</div>
-      </div>
-
-      <!-- ✅ FIXED LOGOUT BUTTON -->
-      <button id="logoutBtn"
-        style="padding:6px 10px; border:none; border-radius:6px; background:#ff4d4d; color:white;">
-        Logout
-      </button>
+  <!-- HEADER -->
+  <div style="display:flex; justify-content:space-between; padding:15px;">
+    <div>
+      <h2>RunIT</h2>
+      <div id="greeting">Loading...</div>
     </div>
 
-    <!-- WALLET -->
-    <div class="card">
-      <h3>Wallet Balance</h3>
-      <h1>₦<span id="balance">0</span></h1>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div class="dashboard">
-
-      <div onclick="location.href='post.html'" class="card">
-        📌 Post Task
-      </div>
-
-      <div onclick="location.href='tasks.html'" class="card">
-        📋 Available Tasks
-      </div>
-
-      <div onclick="location.href='services.html'" class="card">
-        🛠 Services
-      </div>
-
-      <div onclick="location.href='my-tasks.html'" class="card">
-        📌 My Tasks
-      </div>
-      
-    </div>
-
+    <button id="logoutBtn"
+      style="padding:8px 12px; background:red; color:white; border:none;">
+      Logout
+    </button>
   </div>
+
+  <h1>Dashboard</h1>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  <!-- Your config -->
+  <!-- YOUR CONFIG -->
   <script src="firebase.js"></script>
 
-  <!-- ✅ FIXED SCRIPT -->
   <script>
-    // 🔐 Logout function
+    console.log("Script loaded");
+
+    // 🔐 AUTH CHECK
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        console.log("No user, redirecting...");
+        window.location.href = "login.html";
+        return;
+      }
+
+      console.log("User logged in:", user.email);
+
+      const greeting = document.getElementById("greeting");
+      greeting.innerText = "HELLO " + (user.email || "USER");
+    });
+
+    // 🔥 LOGOUT FUNCTION
     function logout() {
+      console.log("Logout clicked");
+
       firebase.auth().signOut()
         .then(() => {
-          console.log("Logged out");
+          console.log("Logged out successfully");
           window.location.href = "login.html";
         })
         .catch((error) => {
@@ -90,52 +61,16 @@
         });
     }
 
-    // ✅ Attach event AFTER page loads
+    // ✅ CONNECT BUTTON
     document.addEventListener("DOMContentLoaded", () => {
       const btn = document.getElementById("logoutBtn");
 
-      if (btn) {
-        btn.addEventListener("click", logout);
-      } else {
-        console.error("Logout button not found");
-      }
-    });
-
-    // 🔥 AUTH + GREETING
-    firebase.auth().onAuthStateChanged((user) => {
-      if (!user) {
-        window.location.href = "login.html";
+      if (!btn) {
+        console.error("Button not found");
         return;
       }
 
-      const greetingEl = document.getElementById("greeting");
-
-      firebase.firestore().collection("users").doc(user.uid).get()
-        .then((doc) => {
-
-          let name = "";
-
-          if (doc.exists && doc.data().username) {
-            name = doc.data().username;
-          } else if (user.displayName) {
-            name = user.displayName;
-          } else {
-            greetingEl.innerText = "HELLO USER";
-            return;
-          }
-
-          const firstName = name.split(" ")[0];
-          greetingEl.innerText = "HELLO " + firstName.toUpperCase();
-
-        })
-        .catch(() => {
-          if (user.displayName) {
-            const firstName = user.displayName.split(" ")[0];
-            greetingEl.innerText = "HELLO " + firstName.toUpperCase();
-          } else {
-            greetingEl.innerText = "HELLO USER";
-          }
-        });
+      btn.addEventListener("click", logout);
     });
   </script>
 
