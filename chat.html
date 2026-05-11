@@ -116,7 +116,7 @@
 
     let currentUser = null;
 
-    // 🔥 STEP 1: GET TASK ID FROM URL (CRITICAL FIX)
+    // 🔥 GET TASK ID
     const params = new URLSearchParams(window.location.search);
     const taskId = params.get("task");
 
@@ -128,46 +128,34 @@
     const chatId = "task_" + taskId;
     const chatRef = db.collection("chats").doc(chatId).collection("messages");
 
-    // AUTH
-    firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
-        currentUser = user.uid;
-        console.log("Logged in:", currentUser);
-      } else {
+    // 🔥 AUTH + SECURITY CHECK + CHAT INIT
+    firebase.auth().onAuthStateChanged(async (user) => {
+
+      if (!user) {
         window.location.href = "login.html";
+        return;
       }
-    });
 
-    // SEND MESSAGE
-    function sendMessage() {
-      const text = messageInput.value.trim();
-      if (text === "" || !currentUser) return;
+      currentUser = user.uid;
 
-      chatRef.add({
-        text: text,
-        sender: currentUser,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      })
-      .then(() => {
-        messageInput.value = "";
-      })
-      .catch((error) => {
-        console.error("Error sending message:", error);
-      });
-    }
+      const chatDoc = await db.collection("chats").doc(chatId).get();
 
-    sendBtn.addEventListener("click", sendMessage);
-
-    messageInput.addEventListener("keypress", function(e){
-      if (e.key === "Enter") {
-        sendMessage();
+      if (!chatDoc.exists) {
+        alert("Chat not found");
+        window.location.href = "tasks.html";
+        return;
       }
-    });
 
-    // REALTIME MESSAGES
-    chatRef
-      .orderBy("createdAt")
-      .onSnapshot((snapshot) => {
+      const chatData = chatDoc.data();
+
+      if (!chatData.participants || !chatData.participants.includes(currentUser)) {
+        alert("Access denied");
+        window.location.href = "tasks.html";
+        return;
+      }
+
+      // 🔥 ONLY START LISTENER AFTER AUTH PASS
+      chatRef.orderBy("createdAt").onSnapshot((snapshot) => {
 
         messages.innerHTML = "";
 
@@ -189,6 +177,30 @@
 
         messages.scrollTop = messages.scrollHeight;
       });
+
+    });
+
+    // SEND MESSAGE
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (text === "" || !currentUser) return;
+
+      chatRef.add({
+        text: text,
+        sender: currentUser,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      messageInput.value = "";
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    messageInput.addEventListener("keypress", function(e){
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
 
   </script>
 
