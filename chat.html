@@ -134,6 +134,21 @@
 
     const chatId = "task_" + taskId;
     const chatRef = db.collection("chats").doc(chatId).collection("messages");
+    const taskInfoDiv = document.getElementById("taskInfo");
+
+db.collection("tasks").doc(taskId).get().then((doc) => {
+
+  if (!doc.exists) return;
+
+  const task = doc.data();
+
+  taskInfoDiv.innerHTML = `
+    <b>Task:</b> ${task.title || "Untitled"} <br>
+    <b>Price:</b> ₦${task.price || 0} <br>
+    <b>Status:</b> ${task.status || "unknown"}
+  `;
+
+});
 
     // 🔥 AUTH + SECURITY CHECK + CHAT INIT
     firebase.auth().onAuthStateChanged(async (user) => {
