@@ -173,7 +173,7 @@ firebase.auth().onAuthStateChanged((user) => {
 
       // SAVE TO FIRESTORE
       db.collection("chats")
-        .doc("demoChat")
+        const chatId = "task_001";
         .collection("messages")
         .add({
 
@@ -211,7 +211,7 @@ firebase.auth().onAuthStateChanged((user) => {
 
     // REALTIME MESSAGE LOADING
     db.collection("chats")
-      .doc("demoChat")
+      const chatId = "task_001";
       .collection("messages")
       .orderBy("createdAt")
       .onSnapshot((snapshot) => {
