@@ -143,7 +143,23 @@
     const db = firebase.firestore();
 
     // CURRENT USER
-    const currentUser = "Powell";
+    let currentUser = null;
+
+firebase.auth().onAuthStateChanged((user) => {
+
+  if(user){
+
+    currentUser = user.uid;
+
+    console.log("Logged in:", currentUser);
+
+  } else {
+
+    window.location.href = "login.html";
+
+  }
+
+});
 
     // SEND MESSAGE
     function sendMessage(){
