@@ -126,61 +126,77 @@
       }, 2000);
     }
 
-   function acceptTask(taskId) {
-  const user = firebase.auth().currentUser;
+    function acceptTask(taskId) {
+      const user = firebase.auth().currentUser;
 
-  if (!user) {
-    showPopup("Login required");
-    return;
-  }
+      if (!user) {
+        showPopup("Login required");
+        return;
+      }
 
-  const taskRef = firebase.firestore().collection("tasks").doc(taskId);
+      const db = firebase.firestore();
+      const taskRef = db.collection("tasks").doc(taskId);
 
-  firebase.firestore().runTransaction(async (transaction) => {
-    const doc = await transaction.get(taskRef);
+      db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(taskRef);
 
-    if (!doc.exists) {
-      throw "Task not found";
+        if (!doc.exists) {
+          throw "Task not found";
+        }
+
+        const task = doc.data();
+
+        if (task.createdBy === user.uid) {
+          throw "You cannot accept your own task";
+        }
+
+        if (task.status === "taken") {
+          throw "Task already taken";
+        }
+
+        const confirmAccept = confirm(
+          `Accept this task for ₦${task.price || 0}?\n\nYou will be responsible for completing it before payment.`
+        );
+
+        if (!confirmAccept) {
+          throw "cancelled";
+        }
+
+        // ✅ UPDATE TASK
+        transaction.update(taskRef, {
+          status: "taken",
+          takenBy: user.uid,
+          takenAt: firebase.firestore.FieldValue.serverTimestamp(),
+          chatId: "task_" + taskId
+        });
+
+      })
+      .then(() => {
+
+        // 🔥 CREATE CHAT AFTER TASK IS LOCKED
+        const db = firebase.firestore();
+
+        const chatId = "task_" + taskId;
+
+        db.collection("chats").doc(chatId).set({
+          participants: [firebase.auth().currentUser.uid],
+          taskId: taskId,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        showPopup("Task accepted successfully");
+
+        // 🔥 GO TO CHAT
+        window.location.href = `chat.html?task=${taskId}`;
+
+      })
+      .catch((err) => {
+        if (err !== "cancelled") {
+          showPopup(err.toString());
+        }
+      });
     }
 
-    const task = doc.data();
-
-    // 🚫 BLOCK ACCEPTING YOUR OWN TASK
-    if (task.createdBy === user.uid) {
-      throw "You cannot accept your own task";
-    }
-
-    // 🚫 BLOCK DOUBLE ACCEPT
-    if (task.status === "taken") {
-      throw "Task already taken";
-    }
-
-    // ⚠️ CONFIRM BEFORE ACCEPT
-    const confirmAccept = confirm(
-      `Accept this task for ₦${task.price || 0}?\n\nYou will be responsible for completing it before payment.`
-    );
-
-    if (!confirmAccept) {
-      throw "cancelled";
-    }
-
-    // ✅ LOCK TASK
-    transaction.update(taskRef, {
-      status: "taken",
-      takenBy: user.uid,
-      takenAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  })
-  .then(() => {
-    showPopup("Task accepted successfully");
-  })
-  .catch((err) => {
-    if (err !== "cancelled") {
-      showPopup(err.toString());
-    }
-  });
-}
-    
     // LOAD TASKS
     firebase.firestore().collection("tasks").onSnapshot(snapshot => {
       taskList.innerHTML = "";
