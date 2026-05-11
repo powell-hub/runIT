@@ -220,11 +220,11 @@ db.collection("tasks").doc(taskId).get().then((doc) => {
       if (text === "" || !currentUser) return;
 
       chatRef.add({
-        text: text,
-        sender: currentUser,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
+  text: text,
+  sender: currentUser,
+  senderName: firebase.auth().currentUser.displayName || "User",
+  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+})
       messageInput.value = "";
     }
 
