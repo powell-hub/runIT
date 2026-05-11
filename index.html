@@ -1,78 +1,219 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>RunIT</title>
+  <title>RunIT Dashboard</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="style.css">
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, sans-serif;
+    }
+
+    body{
+      background:#f5f5f5;
+      padding:20px;
+    }
+
+    .app{
+      max-width:500px;
+      margin:auto;
+    }
+
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+    }
+
+    .logo{
+      font-size:28px;
+      font-weight:bold;
+      color:#5b3df5;
+    }
+
+    #greeting{
+      color:#666;
+      margin-top:5px;
+      font-size:14px;
+    }
+
+    #logoutBtn{
+      background:#ff4d4d;
+      color:white;
+      border:none;
+      padding:10px 14px;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    .wallet{
+      background:linear-gradient(135deg,#5b3df5,#7c5cff);
+      color:white;
+      padding:25px;
+      border-radius:18px;
+      margin-bottom:20px;
+    }
+
+    .wallet h3{
+      margin-bottom:10px;
+      font-size:16px;
+    }
+
+    .wallet h1{
+      font-size:36px;
+    }
+
+    .dashboard{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:15px;
+    }
+
+    .card{
+      background:white;
+      padding:25px 20px;
+      border-radius:18px;
+      cursor:pointer;
+      transition:0.2s;
+      box-shadow:0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .card:hover{
+      transform:translateY(-3px);
+    }
+
+    .card h2{
+      font-size:18px;
+      margin-bottom:8px;
+    }
+
+    .card p{
+      color:#666;
+      font-size:14px;
+    }
+
+  </style>
 </head>
 
 <body>
 
+<div class="app">
+
   <!-- HEADER -->
-  <div style="display:flex; justify-content:space-between; padding:15px;">
+  <div class="header">
+
     <div>
-      <h2>RunIT</h2>
+      <div class="logo">RunIT</div>
       <div id="greeting">Loading...</div>
     </div>
 
-    <button id="logoutBtn"
-      style="padding:8px 12px; background:red; color:white; border:none;">
+    <button id="logoutBtn">
       Logout
     </button>
+
   </div>
 
-  <h1>Dashboard</h1>
+  <!-- WALLET -->
+  <div class="wallet">
+    <h3>Wallet Balance</h3>
+    <h1>₦0.00</h1>
+  </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- DASHBOARD -->
+  <div class="dashboard">
 
-  <!-- YOUR CONFIG -->
-  <script src="firebase.js"></script>
+    <div class="card" onclick="location.href='post.html'">
+      <h2>📌 Get Help</h2>
+      <p>Post a task or request</p>
+    </div>
 
-  <script>
-    console.log("Script loaded");
+    <div class="card" onclick="location.href='tasks.html'">
+      <h2>💰 Earn Money</h2>
+      <p>Accept nearby tasks</p>
+    </div>
 
-    // 🔐 AUTH CHECK
-    firebase.auth().onAuthStateChanged((user) => {
-      if (!user) {
-        console.log("No user, redirecting...");
-        window.location.href = "login.html";
-        return;
-      }
+    <div class="card" onclick="location.href='wallet.html'">
+      <h2>💳 Wallet</h2>
+      <p>View balance & payments</p>
+    </div>
 
-      console.log("User logged in:", user.email);
+    <div class="card" onclick="location.href='profile.html'">
+      <h2>👤 Profile</h2>
+      <p>Manage your account</p>
+    </div>
 
-      const greeting = document.getElementById("greeting");
-      greeting.innerText = "HELLO " + (user.email || "USER");
-    });
+  </div>
 
-    // 🔥 LOGOUT FUNCTION
-    function logout() {
-      console.log("Logout clicked");
+</div>
 
-      firebase.auth().signOut()
-        .then(() => {
-          console.log("Logged out successfully");
-          window.location.href = "login.html";
-        })
-        .catch((error) => {
-          console.error("Logout error:", error);
-        });
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Firebase Config -->
+<script src="firebase.js"></script>
+
+<script>
+
+  console.log("Dashboard loaded");
+
+  // AUTH CHECK
+  firebase.auth().onAuthStateChanged((user) => {
+
+    if (!user) {
+      window.location.href = "login.html";
+      return;
     }
 
-    // ✅ CONNECT BUTTON
-    document.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("logoutBtn");
+    const greeting = document.getElementById("greeting");
 
-      if (!btn) {
-        console.error("Button not found");
-        return;
-      }
+    if(user.displayName){
+      greeting.innerText = "Welcome back, " + user.displayName;
+    } else {
+      greeting.innerText = "Welcome back";
+    }
 
-      btn.addEventListener("click", logout);
-    });
-  </script>
+  });
+
+  // LOGOUT
+  function logout(){
+
+    firebase.auth().signOut()
+
+      .then(() => {
+
+        console.log("Logged out");
+        window.location.href = "login.html";
+
+      })
+
+      .catch((error) => {
+
+        console.error(error);
+
+      });
+
+  }
+
+  // CONNECT BUTTON
+  document.addEventListener("DOMContentLoaded", () => {
+
+    const btn = document.getElementById("logoutBtn");
+
+    btn.addEventListener("click", logout);
+
+  });
+
+</script>
 
 </body>
 </html>
