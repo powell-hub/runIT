@@ -149,6 +149,18 @@ db.collection("tasks").doc(taskId).get().then((doc) => {
   `;
 
 });
+    db.collection("chats").doc(chatId).get().then((doc) => {
+
+  const data = doc.data();
+
+  const otherUser = data.participants.find(id => id !== currentUser);
+
+  if (otherUser) {
+    document.getElementById("chatHeader").innerText =
+      "Chat with user";
+  }
+
+});
 
     // 🔥 AUTH + SECURITY CHECK + CHAT INIT
     firebase.auth().onAuthStateChanged(async (user) => {
