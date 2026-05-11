@@ -205,8 +205,13 @@ db.collection("tasks").doc(taskId).get().then((doc) => {
             messageDiv.classList.add("received");
           }
 
-          messageDiv.innerText = data.text;
-          messages.appendChild(messageDiv);
+messageDiv.innerHTML = `
+  <b style="font-size:12px; display:block; color:#999;">
+    ${data.senderName || "User"}
+  </b>
+  ${data.text}
+`;
+        messages.appendChild(messageDiv);
         });
 
         messages.scrollTop = messages.scrollHeight;
