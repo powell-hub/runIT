@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your Chats - RunIT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      margin:0;
+      font-family:Arial;
+      background:#f6f7fb;
+    }
+
+    .header{
+      padding:15px;
+      font-size:18px;
+      font-weight:bold;
+      background:white;
+      border-bottom:1px solid #eee;
+    }
+
+    .chat-list{
+      padding:10px;
+    }
+
+    .chat-card{
+      background:white;
+      padding:15px;
+      margin-bottom:10px;
+      border-radius:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+      cursor:pointer;
+    }
+
+    .chat-title{
+      font-weight:600;
+      margin-bottom:5px;
+    }
+
+    .chat-sub{
+      font-size:13px;
+      color:#666;
+    }
+
+    .empty{
+      text-align:center;
+      padding:40px;
+      color:#888;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">💬 Your Chats</div>
+
+  <div class="chat-list" id="chatList">
+    Loading chats...
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script src="firebase.js"></script>
+
+  <script>
+
+    const db = firebase.firestore();
+    const chatList = document.getElementById("chatList");
+
+    let currentUser = null;
+
+    firebase.auth().onAuthStateChanged((user) => {
+
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      currentUser = user.uid;
+
+      loadChats();
+
+    });
+
+    function loadChats(){
+
+      db.collection("chats")
+        .where("participants", "array-contains", currentUser)
+        .onSnapshot(snapshot => {
+
+          chatList.innerHTML = "";
+
+          if(snapshot.empty){
+            chatList.innerHTML = "<div class='empty'>No chats yet</div>";
+            return;
+          }
+
+          snapshot.forEach(doc => {
+
+            const data = doc.data();
+
+            const taskId = data.taskId;
+
+            chatList.innerHTML += `
+              <div class="chat-card" onclick="openChat('${taskId}')">
+                <div class="chat-title">Task Chat</div>
+                <div class="chat-sub">Tap to open conversation</div>
+              </div>
+            `;
+
+          });
+
+        });
+
+    }
+
+    function openChat(taskId){
+      window.location.href = "chat.html?task=" + taskId;
+    }
+
+  </script>
+
+</body>
+</html>
