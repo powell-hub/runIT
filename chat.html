@@ -105,7 +105,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  <!-- Your Firebase config -->
   <script src="firebase.js"></script>
 
   <script>
@@ -117,10 +116,19 @@
 
     let currentUser = null;
 
-    // FIXED CHAT STRUCTURE
-    const chatId = "task_001";
+    // 🔥 STEP 1: GET TASK ID FROM URL (CRITICAL FIX)
+    const params = new URLSearchParams(window.location.search);
+    const taskId = params.get("task");
+
+    if (!taskId) {
+      alert("No task selected");
+      window.location.href = "tasks.html";
+    }
+
+    const chatId = "task_" + taskId;
     const chatRef = db.collection("chats").doc(chatId).collection("messages");
 
+    // AUTH
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         currentUser = user.uid;
@@ -133,7 +141,7 @@
     // SEND MESSAGE
     function sendMessage() {
       const text = messageInput.value.trim();
-      if (text === "") return;
+      if (text === "" || !currentUser) return;
 
       chatRef.add({
         text: text,
