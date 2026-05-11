@@ -2,11 +2,9 @@
 <html>
 <head>
   <title>RunIT Chat</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-
     *{
       margin:0;
       padding:0;
@@ -21,8 +19,6 @@
       flex-direction:column;
     }
 
-    /* HEADER */
-
     .header{
       background:#5b3df5;
       color:white;
@@ -30,8 +26,6 @@
       font-size:20px;
       font-weight:bold;
     }
-
-    /* CHAT AREA */
 
     #messages{
       flex:1;
@@ -41,8 +35,6 @@
       flex-direction:column;
       gap:10px;
     }
-
-    /* MESSAGE */
 
     .message{
       max-width:70%;
@@ -66,8 +58,6 @@
       color:black;
       border-bottom-left-radius:4px;
     }
-
-    /* INPUT AREA */
 
     .input-area{
       display:flex;
@@ -96,33 +86,18 @@
       cursor:pointer;
       font-size:18px;
     }
-
   </style>
 </head>
 
 <body>
 
-  <!-- HEADER -->
-  <div class="header">
-    RunIT Chat
-  </div>
+  <div class="header">RunIT Chat</div>
 
-  <!-- CHAT AREA -->
   <div id="messages"></div>
 
-  <!-- INPUT -->
   <div class="input-area">
-
-    <input
-      type="text"
-      id="messageInput"
-      placeholder="Type a message..."
-    >
-
-    <button id="sendBtn">
-      ➤
-    </button>
-
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="sendBtn">➤</button>
   </div>
 
   <!-- Firebase -->
@@ -130,123 +105,81 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  <!-- Firebase Config -->
+  <!-- Your Firebase config -->
   <script src="firebase.js"></script>
 
   <script>
-
     const sendBtn = document.getElementById("sendBtn");
     const messageInput = document.getElementById("messageInput");
     const messages = document.getElementById("messages");
 
-    // FIRESTORE
     const db = firebase.firestore();
 
-    // CURRENT USER
     let currentUser = null;
 
-firebase.auth().onAuthStateChanged((user) => {
+    // FIXED CHAT STRUCTURE
+    const chatId = "task_001";
+    const chatRef = db.collection("chats").doc(chatId).collection("messages");
 
-  if(user){
-
-    currentUser = user.uid;
-
-    console.log("Logged in:", currentUser);
-
-  } else {
-
-    window.location.href = "login.html";
-
-  }
-
-});
-
-    // SEND MESSAGE
-    function sendMessage(){
-
-      const text = messageInput.value.trim();
-
-      // PREVENT EMPTY MESSAGE
-      if(text === ""){
-        return;
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user.uid;
+        console.log("Logged in:", currentUser);
+      } else {
+        window.location.href = "login.html";
       }
-
-      // SAVE TO FIRESTORE
-      db.collection("chats")
-        const chatId = "task_001";
-        .collection("messages")
-        .add({
-
-          text: text,
-          sender: currentUser,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-
-        })
-
-        .then(() => {
-
-          messageInput.value = "";
-
-        })
-
-        .catch((error) => {
-
-          console.error("Error sending message:", error);
-
-        });
-
-    }
-
-    // BUTTON CLICK
-    sendBtn.addEventListener("click", sendMessage);
-
-    // ENTER KEY
-    messageInput.addEventListener("keypress", function(e){
-
-      if(e.key === "Enter"){
-        sendMessage();
-      }
-
     });
 
-    // REALTIME MESSAGE LOADING
-    db.collection("chats")
-      const chatId = "task_001";
-      .collection("messages")
+    // SEND MESSAGE
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (text === "") return;
+
+      chatRef.add({
+        text: text,
+        sender: currentUser,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(() => {
+        messageInput.value = "";
+      })
+      .catch((error) => {
+        console.error("Error sending message:", error);
+      });
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    messageInput.addEventListener("keypress", function(e){
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+
+    // REALTIME MESSAGES
+    chatRef
       .orderBy("createdAt")
       .onSnapshot((snapshot) => {
 
-        // CLEAR EXISTING
         messages.innerHTML = "";
 
         snapshot.forEach((doc) => {
-
           const data = doc.data();
 
           const messageDiv = document.createElement("div");
-
           messageDiv.classList.add("message");
 
-          // SENT OR RECEIVED
-          if(data.sender === currentUser){
-
+          if (data.sender === currentUser) {
             messageDiv.classList.add("sent");
-
           } else {
-
             messageDiv.classList.add("received");
-
           }
 
           messageDiv.innerText = data.text;
-
           messages.appendChild(messageDiv);
-
         });
 
-        // AUTO SCROLL
         messages.scrollTop = messages.scrollHeight;
-
       });
 
   </script>
