@@ -125,11 +125,25 @@
 
   </div>
 
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="firebase.js"></script>
+
   <script>
 
     const sendBtn = document.getElementById("sendBtn");
     const messageInput = document.getElementById("messageInput");
     const messages = document.getElementById("messages");
+
+    // FIRESTORE
+    const db = firebase.firestore();
+
+    // CURRENT USER
+    const currentUser = "Powell";
 
     // SEND MESSAGE
     function sendMessage(){
@@ -141,22 +155,30 @@
         return;
       }
 
-      // CREATE MESSAGE DIV
-      const messageDiv = document.createElement("div");
+      // SAVE TO FIRESTORE
+      db.collection("chats")
+        .doc("demoChat")
+        .collection("messages")
+        .add({
 
-      messageDiv.classList.add("message");
-      messageDiv.classList.add("sent");
+          text: text,
+          sender: currentUser,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
 
-      messageDiv.innerText = text;
+        })
 
-      // ADD TO CHAT
-      messages.appendChild(messageDiv);
+        .then(() => {
 
-      // CLEAR INPUT
-      messageInput.value = "";
+          messageInput.value = "";
 
-      // AUTO SCROLL
-      messages.scrollTop = messages.scrollHeight;
+        })
+
+        .catch((error) => {
+
+          console.error("Error sending message:", error);
+
+        });
+
     }
 
     // BUTTON CLICK
@@ -170,6 +192,46 @@
       }
 
     });
+
+    // REALTIME MESSAGE LOADING
+    db.collection("chats")
+      .doc("demoChat")
+      .collection("messages")
+      .orderBy("createdAt")
+      .onSnapshot((snapshot) => {
+
+        // CLEAR EXISTING
+        messages.innerHTML = "";
+
+        snapshot.forEach((doc) => {
+
+          const data = doc.data();
+
+          const messageDiv = document.createElement("div");
+
+          messageDiv.classList.add("message");
+
+          // SENT OR RECEIVED
+          if(data.sender === currentUser){
+
+            messageDiv.classList.add("sent");
+
+          } else {
+
+            messageDiv.classList.add("received");
+
+          }
+
+          messageDiv.innerText = data.text;
+
+          messages.appendChild(messageDiv);
+
+        });
+
+        // AUTO SCROLL
+        messages.scrollTop = messages.scrollHeight;
+
+      });
 
   </script>
 
