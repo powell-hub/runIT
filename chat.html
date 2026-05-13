@@ -156,11 +156,19 @@ db.collection("tasks").doc(taskId).get().then((doc) => {
 
   const otherUser = data.participants.find(id => id !== currentUser);
 
-  if (otherUser) {
-    document.getElementById("chatHeader").innerText =
-      "Chat with user";
-  }
+if (otherUser) {
 
+  db.collection("users").doc(otherUser).get().then((userDoc) => {
+
+    const otherUserData = userDoc.data();
+
+    document.getElementById("chatHeader").innerText =
+      otherUserData.username || "User";
+
+  });
+
+}
+      
 });
 
     // 🔥 AUTH + SECURITY CHECK + CHAT INIT
