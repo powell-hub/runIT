@@ -105,12 +105,11 @@
             const taskId = data.taskId;
 
             chatList.innerHTML += `
-              <div class="chat-card" onclick="openChat('${taskId}')">
-                <div class="chat-title">Task Chat</div>
-                <div class="chat-sub">Tap to open conversation</div>
-              </div>
-            `;
-
+  <div class="chat-card" onclick="openChat('${taskId}')">
+    <div class="chat-title">Task: ${taskId}</div>
+    <div class="chat-sub">Tap to open conversation</div>
+  </div>
+`;
           });
 
         });
