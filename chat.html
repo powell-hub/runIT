@@ -231,8 +231,8 @@ messageDiv.innerHTML = `
       chatRef.add({
   text: text,
   sender: currentUser,
-  senderName: firebase.auth().currentUser.displayName || "User",
-  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+senderName: currentUserData?.username || "User",
+createdAt: firebase.firestore.FieldValue.serverTimestamp()
 })
       messageInput.value = "";
     }
