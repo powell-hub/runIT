@@ -172,6 +172,9 @@ db.collection("tasks").doc(taskId).get().then((doc) => {
       }
 
       currentUser = user.uid;
+      db.collection("users").doc(user.uid).get().then((doc) => {
+  currentUserData = doc.data();
+});
 
       const chatDoc = await db.collection("chats").doc(chatId).get();
 
