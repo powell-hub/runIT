@@ -226,14 +226,25 @@
                 ${task.status === "taken" ? "TAKEN" : "OPEN"}
               </span>
 
-              ${task.status === "open" ? `
-                <button class="btn" onclick="acceptTask('${doc.id}')">
-                  Accept
-                </button>
-              ` : `
-                <span style="font-size:12px; color:#999;">Taken</span>
-              `}
+             ${task.status === "open" ? `
 
+  <button class="btn" onclick="acceptTask('${doc.id}')">
+    Accept
+  </button>
+
+` : task.status === "taken" ? `
+
+  <button class="btn" onclick="startTask('${doc.id}')">
+    Start Task
+  </button>
+
+` : `
+
+  <span style="font-size:12px; color:#999;">
+    ${task.status.toUpperCase()}
+  </span>
+
+`}
             </div>
 
           </div>
