@@ -277,9 +277,9 @@
 
             <div class="task-bottom">
 
-              <span class="badge ${task.status === "taken" ? "taken" : "open"}">
-                ${task.status === "taken" ? "TAKEN" : "OPEN"}
-              </span>
+ <span class="badge ${task.status}">
+  ${task.status.toUpperCase()}
+ </span>
 
              ${task.status === "open" ? `
 
