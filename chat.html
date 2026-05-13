@@ -121,8 +121,9 @@
 
     const db = firebase.firestore();
 
-    let currentUser = null;
-
+let currentUser = null;
+let currentUserData = null;
+    
     // 🔥 GET TASK ID
     const params = new URLSearchParams(window.location.search);
     const taskId = params.get("task");
