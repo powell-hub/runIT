@@ -100,20 +100,35 @@
 
           snapshot.forEach(doc => {
 
-            const data = doc.data();
+  const data = doc.data();
 
-            const taskId = data.taskId;
+  db.collection("chats")
+    .doc(doc.id)
+    .collection("messages")
+    .orderBy("createdAt", "desc")
+    .limit(1)
+    .get()
+    .then((msgSnap) => {
 
-            chatList.innerHTML += `
-  <div class="chat-card" onclick="openChat('${taskId}')">
-    <div class="chat-title">Task: ${taskId}</div>
-    <div class="chat-sub">Tap to open conversation</div>
-  </div>
-`;
-          });
+      let lastMsg = "No messages yet";
 
-        });
+      msgSnap.forEach(m => {
+        lastMsg = m.data().text;
+      });
 
+      const taskId = data.taskId;
+
+      chatList.innerHTML += `
+        <div class="chat-card" onclick="openChat('${taskId}')">
+          <div class="chat-title">Task Chat</div>
+          <div class="chat-sub">${lastMsg}</div>
+        </div>
+      `;
+
+    });
+
+});
+          
     }
 
     function openChat(taskId){
