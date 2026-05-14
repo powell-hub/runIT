@@ -281,7 +281,7 @@
   ${task.status.toUpperCase()}
  </span>
 
-             ${task.status === "open" ? `
+    ${task.status === "open" ? `
 
   <button class="btn" onclick="acceptTask('${doc.id}')">
     Accept
@@ -291,6 +291,12 @@
 
   <button class="btn" onclick="startTask('${doc.id}')">
     Start Task
+  </button>
+
+` : task.status === "in_progress" ? `
+
+  <button class="btn" onclick="completeTask('${doc.id}')">
+    Mark Completed
   </button>
 
 ` : `
