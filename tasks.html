@@ -351,6 +351,12 @@
     Mark Completed
   </button>
 
+` : task.status === "completed_pending" ? `
+
+  <button class="btn" onclick="confirmTask('${doc.id}')">
+    Confirm Completion
+  </button>
+
 ` : `
 
   <span style="font-size:12px; color:#999;">
