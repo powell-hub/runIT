@@ -106,58 +106,81 @@
           }
 
           snapshot.forEach(doc => {
-            const task = doc.data();
 
-            container.innerHTML += `
-              <div class="task-card">
+  const task = doc.data();
 
-           if (task.status === "taken" && task.takenBy) {
+  let acceptedUserHTML = `
+    <div style="margin-top:5px; font-size:12px; color:#999;">
+      Waiting for someone to accept
+    </div>
+  `;
 
-  firebase.firestore()
-    .collection("users")
-    .doc(task.takenBy)
-    .get()
-    .then(userDoc => {
-      const userData = userDoc.data();
+  // IF TASK HAS BEEN ACCEPTED
+  if (task.takenBy) {
 
-      document.getElementById(`user-${doc.id}`).innerText =
-        "Accepted by: " + (userData?.username || "Unknown user");
-    })
-    .catch(() => {
-      document.getElementById(`user-${doc.id}`).innerText =
-        "Accepted by: Unknown";
-    });
+    acceptedUserHTML = `
+      <div id="user-${doc.id}" style="margin-top:5px; font-size:12px;">
+        Loading user...
+      </div>
+    `;
 
-}
+    firebase.firestore()
+      .collection("users")
+      .doc(task.takenBy)
+      .get()
+      .then(userDoc => {
 
-                <div class="task-title">
-                  ${task.title || "Untitled Task"}
-                </div>
+        const userData = userDoc.data();
 
-                <div class="task-info">
-                  ₦${task.price || 0}
-                </div>
+        const userElement =
+          document.getElementById(`user-${doc.id}`);
 
-                <div class="status ${task.status === "taken" ? "taken" : "open"}">
-                  ${task.status === "taken" ? "TAKEN" : "OPEN"}
-                </div>
+        if(userElement){
+          userElement.innerText =
+            "Accepted by: " +
+            (userData?.username || "Unknown user");
+        }
 
-                ${
-                  task.status === "taken"
-                  ? `<div style="margin-top:5px; font-size:12px;">
-                      <div id="user-${doc.id}" style="margin-top:5px; font-size:12px;">
-  Loading user...
-</div>
-                    </div>`
-                  : `<div style="margin-top:5px; font-size:12px; color:#999;">
-                      Waiting for someone to accept
-                    </div>`
-                }
+      })
 
-              </div>
-            `;
-          });
+      .catch(() => {
 
+        const userElement =
+          document.getElementById(`user-${doc.id}`);
+
+        if(userElement){
+          userElement.innerText =
+            "Accepted by: Unknown";
+        }
+
+      });
+
+  }
+
+  container.innerHTML += `
+
+    <div class="task-card">
+
+      <div class="task-title">
+        ${task.title || "Untitled Task"}
+      </div>
+
+      <div class="task-info">
+        ₦${task.price || 0}
+      </div>
+
+      <div class="status ${task.status}">
+        ${(task.status || "open").toUpperCase()}
+      </div>
+
+      ${acceptedUserHTML}
+
+    </div>
+
+  `;
+
+});
+          
         });
     });
   </script>
