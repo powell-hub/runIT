@@ -72,11 +72,10 @@
     }
 
     .dashboard{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:15px;
-    }
-
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px;
+}
     .card{
       background:white;
       padding:25px 20px;
