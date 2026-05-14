@@ -44,26 +44,22 @@
     }
 
     .open { color: #0077ff; }
+    .taken { color: #ff3b3b; }
+    .in_progress { color: #ff9800; }
+    .completed_pending { color: #8a2be2; }
+    .completed { color: #1a9c37; }
 
-.taken { color: #ff3b3b; }
+    .chat-btn{
+      margin-top:10px;
+      padding:8px 14px;
+      border:none;
+      border-radius:8px;
+      background:#6c4cff;
+      color:white;
+      cursor:pointer;
+      font-size:13px;
+    }
 
-.in_progress { color: #ff9800; }
-
-.completed_pending { color: #8a2be2; }
-
-.completed { color: #1a9c37; }
-    
-.chat-btn{
-  margin-top:10px;
-  padding:8px 14px;
-  border:none;
-  border-radius:8px;
-  background:#6c4cff;
-  color:white;
-  cursor:pointer;
-  font-size:13px;
-}
-  
     #popup {
       position: fixed;
       top: 20px;
@@ -90,9 +86,9 @@
 
   <div class="header">🛠 Tasks I Accepted</div>
 
-<div class="task-container" id="acceptedTasks">
-  Loading...
-</div>
+  <div class="task-container" id="acceptedTasks">
+    Loading...
+  </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -102,6 +98,9 @@
   <script src="firebase.js"></script>
 
   <script>
+
+    const db = firebase.firestore();
+
     const container = document.getElementById("myTasks");
     const acceptedContainer = document.getElementById("acceptedTasks");
     const popup = document.getElementById("popup");
@@ -111,22 +110,28 @@
       popup.style.display = "block";
       setTimeout(() => popup.style.display = "none", 2000);
     }
+
     function openChat(taskId){
-
-  window.location.href =
-    `chat.html?task=${taskId}`;
-
-}
+      window.location.href = `chat.html?task=${taskId}`;
+    }
 
     firebase.auth().onAuthStateChanged(user => {
+
       if (!user) {
         showPopup("Login required");
         return;
       }
 
-      firebase.firestore()
-        .collection("tasks")
-        .where("createdBy", "==", user.uid)
+      loadPostedTasks(user.uid);
+      loadAcceptedTasks(user.uid);
+
+    });
+
+    // 🔥 POSTED TASKS (OWNER)
+    function loadPostedTasks(uid){
+
+      db.collection("tasks")
+        .where("createdBy", "==", uid)
         .onSnapshot(snapshot => {
 
           container.innerHTML = "";
@@ -138,136 +143,120 @@
 
           snapshot.forEach(doc => {
 
-  const task = doc.data();
+            const task = doc.data();
 
-  let acceptedUserHTML = `
-    <div style="margin-top:5px; font-size:12px; color:#999;">
-      Waiting for someone to accept
-    </div>
-  `;
+            let acceptedUserHTML = `
+              <div style="margin-top:5px; font-size:12px; color:#999;">
+                Waiting for someone to accept
+              </div>
+            `;
 
-   function loadAcceptedTasks(uid){
+            if (task.takenBy) {
 
-  firebase.firestore()
-    .collection("tasks")
-    .where("takenBy", "==", uid)
-    .onSnapshot(snapshot => {
+              acceptedUserHTML = `
+                <div id="user-${doc.id}" style="margin-top:5px; font-size:12px;">
+                  Loading user...
+                </div>
+              `;
 
-      acceptedContainer.innerHTML = "";
+              db.collection("users")
+                .doc(task.takenBy)
+                .get()
+                .then(userDoc => {
 
-      if(snapshot.empty){
-        acceptedContainer.innerHTML =
-          "<p>No accepted tasks yet</p>";
-        return;
-      }
+                  const userData = userDoc.data();
+                  const el = document.getElementById(`user-${doc.id}`);
 
-      snapshot.forEach(doc => {
+                  if (el) {
+                    el.innerText =
+                      "Accepted by: " + (userData?.username || "Unknown");
+                  }
 
-        const task = doc.data();
+                })
+                .catch(() => {
+                  const el = document.getElementById(`user-${doc.id}`);
+                  if (el) el.innerText = "Accepted by: Unknown";
+                });
+            }
 
-        acceptedContainer.innerHTML += `
-          <div class="task-card">
+            container.innerHTML += `
+              <div class="task-card">
 
-            <div class="task-title">
-              ${task.title || "Untitled Task"}
-            </div>
+                <div class="task-title">
+                  ${task.title || "Untitled Task"}
+                </div>
 
-            <div class="task-info">
-              ₦${task.price || 0}
-            </div>
+                <div class="task-info">
+                  ₦${task.price || 0}
+                </div>
 
-            <div class="status ${task.status}">
-              ${(task.status || "open").toUpperCase()}
-            </div>
+                <div class="status ${task.status}">
+                  ${(task.status || "open").toUpperCase()}
+                </div>
 
-            <button class="chat-btn"
-              onclick="openChat('${doc.id}')">
-              Open Chat
-            </button>
+                ${acceptedUserHTML}
 
-          </div>
-        `;
+                ${task.takenBy ? `
+                  <button class="chat-btn" onclick="openChat('${doc.id}')">
+                    Open Chat
+                  </button>
+                ` : ``}
 
-      });
+              </div>
+            `;
 
-    });
+          });
 
-}
-            
-  // IF TASK HAS BEEN ACCEPTED
-  if (task.takenBy) {
-
-    acceptedUserHTML = `
-      <div id="user-${doc.id}" style="margin-top:5px; font-size:12px;">
-        Loading user...
-      </div>
-    `;
-
-    firebase.firestore()
-      .collection("users")
-      .doc(task.takenBy)
-      .get()
-      .then(userDoc => {
-
-        const userData = userDoc.data();
-
-        const userElement =
-          document.getElementById(`user-${doc.id}`);
-
-        if(userElement){
-          userElement.innerText =
-            "Accepted by: " +
-            (userData?.username || "Unknown user");
-        }
-
-      })
-
-      .catch(() => {
-
-        const userElement =
-          document.getElementById(`user-${doc.id}`);
-
-        if(userElement){
-          userElement.innerText =
-            "Accepted by: Unknown";
-        }
-
-      });
-
-  }
-
-  container.innerHTML += `
-
-    <div class="task-card">
-
-      <div class="task-title">
-        ${task.title || "Untitled Task"}
-      </div>
-
-      <div class="task-info">
-        ₦${task.price || 0}
-      </div>
-
-      <div class="status ${task.status}">
-        ${(task.status || "open").toUpperCase()}
-      </div>
-
-${acceptedUserHTML}
-
-${task.takenBy ? `
-  <button class="chat-btn" onclick="openChat('${doc.id}')">
-    Open Chat
-  </button>
-` : ``}
-
-    </div>
-
-  `;
-
-});
-          
         });
-    });
+
+    }
+
+    // 🔥 ACCEPTED TASKS (WORKER)
+    function loadAcceptedTasks(uid){
+
+      db.collection("tasks")
+        .where("takenBy", "==", uid)
+        .onSnapshot(snapshot => {
+
+          acceptedContainer.innerHTML = "";
+
+          if (snapshot.empty) {
+            acceptedContainer.innerHTML = "<p>No accepted tasks yet</p>";
+            return;
+          }
+
+          snapshot.forEach(doc => {
+
+            const task = doc.data();
+
+            acceptedContainer.innerHTML += `
+              <div class="task-card">
+
+                <div class="task-title">
+                  ${task.title || "Untitled Task"}
+                </div>
+
+                <div class="task-info">
+                  ₦${task.price || 0}
+                </div>
+
+                <div class="status ${task.status}">
+                  ${(task.status || "open").toUpperCase()}
+                </div>
+
+                <button class="chat-btn" onclick="openChat('${doc.id}')">
+                  Open Chat
+                </button>
+
+              </div>
+            `;
+
+          });
+
+        });
+
+    }
+
   </script>
 
 </body>
