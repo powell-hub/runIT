@@ -303,7 +303,64 @@
   });
 
 }
-    
+    function confirmTask(taskId) {
+
+  const user = firebase.auth().currentUser;
+
+  if (!user) {
+    showPopup("Login required");
+    return;
+  }
+
+  const taskRef = firebase.firestore()
+    .collection("tasks")
+    .doc(taskId);
+
+  taskRef.get().then((doc) => {
+
+    if (!doc.exists) {
+      showPopup("Task not found");
+      return;
+    }
+
+    const task = doc.data();
+
+    // 🚫 ONLY TASK OWNER CAN CONFIRM
+    if (task.createdBy !== user.uid) {
+      showPopup("Only task owner can confirm");
+      return;
+    }
+
+    // 🚫 MUST BE WAITING CONFIRMATION
+    if (task.status !== "completed_pending") {
+      showPopup("Task not awaiting confirmation");
+      return;
+    }
+
+    // ⚠️ FINAL CONFIRMATION
+    const confirmDone = confirm(
+      "Confirm this task has been completed successfully?"
+    );
+
+    if (!confirmDone) return;
+
+    // ✅ FINAL CLOSE
+    taskRef.update({
+      status: "completed",
+      confirmedAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+
+    .then(() => {
+      showPopup("Task completed successfully");
+    })
+
+    .catch((err) => {
+      showPopup(err.message);
+    });
+
+  });
+
+}
     // LOAD TASKS
     firebase.firestore().collection("tasks").onSnapshot(snapshot => {
       taskList.innerHTML = "";
