@@ -88,6 +88,12 @@
     Loading...
   </div>
 
+  <div class="header">🛠 Tasks I Accepted</div>
+
+<div class="task-container" id="acceptedTasks">
+  Loading...
+</div>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -97,6 +103,7 @@
 
   <script>
     const container = document.getElementById("myTasks");
+    const acceptedContainer = document.getElementById("acceptedTasks");
     const popup = document.getElementById("popup");
 
     function showPopup(msg) {
@@ -139,6 +146,54 @@
     </div>
   `;
 
+   function loadAcceptedTasks(uid){
+
+  firebase.firestore()
+    .collection("tasks")
+    .where("takenBy", "==", uid)
+    .onSnapshot(snapshot => {
+
+      acceptedContainer.innerHTML = "";
+
+      if(snapshot.empty){
+        acceptedContainer.innerHTML =
+          "<p>No accepted tasks yet</p>";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+
+        const task = doc.data();
+
+        acceptedContainer.innerHTML += `
+          <div class="task-card">
+
+            <div class="task-title">
+              ${task.title || "Untitled Task"}
+            </div>
+
+            <div class="task-info">
+              ₦${task.price || 0}
+            </div>
+
+            <div class="status ${task.status}">
+              ${(task.status || "open").toUpperCase()}
+            </div>
+
+            <button class="chat-btn"
+              onclick="openChat('${doc.id}')">
+              Open Chat
+            </button>
+
+          </div>
+        `;
+
+      });
+
+    });
+
+}
+            
   // IF TASK HAS BEEN ACCEPTED
   if (task.takenBy) {
 
