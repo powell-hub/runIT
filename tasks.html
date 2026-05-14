@@ -250,8 +250,60 @@
     });
 
   });
+      
+}
+    function completeTask(taskId) {
+
+  const user = firebase.auth().currentUser;
+
+  if (!user) {
+    showPopup("Login required");
+    return;
+  }
+
+  const taskRef = firebase.firestore()
+    .collection("tasks")
+    .doc(taskId);
+
+  taskRef.get().then((doc) => {
+
+    if (!doc.exists) {
+      showPopup("Task not found");
+      return;
+    }
+
+    const task = doc.data();
+
+    // 🚫 ONLY WORKER CAN COMPLETE
+    if (task.takenBy !== user.uid) {
+      showPopup("Only assigned worker can complete this task");
+      return;
+    }
+
+    // 🚫 MUST BE IN PROGRESS
+    if (task.status !== "in_progress") {
+      showPopup("Task not in progress");
+      return;
+    }
+
+    // ✅ MARK COMPLETED (PENDING OWNER CONFIRMATION)
+    taskRef.update({
+      status: "completed_pending",
+      completedAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+
+    .then(() => {
+      showPopup("Marked as completed. Waiting for confirmation.");
+    })
+
+    .catch((err) => {
+      showPopup(err.message);
+    });
+
+  });
 
 }
+    
     // LOAD TASKS
     firebase.firestore().collection("tasks").onSnapshot(snapshot => {
       taskList.innerHTML = "";
