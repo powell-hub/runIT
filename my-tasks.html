@@ -191,7 +191,13 @@
         ${(task.status || "open").toUpperCase()}
       </div>
 
-      ${acceptedUserHTML}
+${acceptedUserHTML}
+
+${task.takenBy ? `
+  <button class="chat-btn" onclick="openChat('${doc.id}')">
+    Open Chat
+  </button>
+` : ``}
 
     </div>
 
