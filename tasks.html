@@ -51,30 +51,12 @@
       font-weight: 600;
     }
 
-    .open {
-      background: #e6f7ff;
-      color: #0077ff;
-    }
+    .open { background: #e6f7ff; color: #0077ff; }
+    .taken { background: #ffe6e6; color: #ff3b3b; }
+    .in_progress { background: #fff4d6; color: #ff9800; }
+    .completed_pending { background: #f3e6ff; color: #8a2be2; }
+    .completed { background: #e6ffe9; color: #1a9c37; }
 
-    .taken {
-      background: #ffe6e6;
-      color: #ff3b3b;
-    }
-    
-    .in_progress {
-  background: #fff4d6;
-  color: #ff9800;
-}
-.completed_pending {
-  background: #f3e6ff;
-  color: #8a2be2;
-}
-
-.completed {
-  background: #e6ffe9;
-  color: #1a9c37;
-}
-    
     .btn {
       padding: 6px 12px;
       border: none;
@@ -120,324 +102,198 @@
     Loading tasks...
   </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  <script src="firebase.js"></script>
+<script src="firebase.js"></script>
 
-  <script>
-    const taskList = document.getElementById("taskList");
-    const popup = document.getElementById("popup");
+<script>
+const taskList = document.getElementById("taskList");
+const popup = document.getElementById("popup");
 
-    function showPopup(message) {
-      popup.innerText = message;
-      popup.style.display = "block";
+function showPopup(message) {
+  popup.innerText = message;
+  popup.style.display = "block";
+  setTimeout(() => popup.style.display = "none", 2000);
+}
 
-      setTimeout(() => {
-        popup.style.display = "none";
-      }, 2000);
-    }
-
-    function acceptTask(taskId) {
-      const user = firebase.auth().currentUser;
-
-      if (!user) {
-        showPopup("Login required");
-        return;
-      }
-
-      const db = firebase.firestore();
-      const taskRef = db.collection("tasks").doc(taskId);
-
-      db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(taskRef);
-
-        if (!doc.exists) {
-          throw "Task not found";
-        }
-
-        const task = doc.data();
-
-        if (task.createdBy === user.uid) {
-          throw "You cannot accept your own task";
-        }
-
-        if (task.status === "taken") {
-          throw "Task already taken";
-        }
-
-        const confirmAccept = confirm(
-          `Accept this task for ₦${task.price || 0}?\n\nYou will be responsible for completing it before payment.`
-        );
-
-        if (!confirmAccept) {
-          throw "cancelled";
-        }
-
-        // ✅ UPDATE TASK
-        transaction.update(taskRef, {
-          status: "taken",
-          takenBy: user.uid,
-          takenAt: firebase.firestore.FieldValue.serverTimestamp(),
-          chatId: "task_" + taskId
-        });
-
-      })
-      .then(() => {
-
-        // 🔥 CREATE CHAT AFTER TASK IS LOCKED
-        const db = firebase.firestore();
-
-        const chatId = "task_" + taskId;
-
-        db.collection("chats").doc(chatId).set({
-          participants: [firebase.auth().currentUser.uid],
-          taskId: taskId,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-        showPopup("Task accepted successfully");
-
-        // 🔥 GO TO CHAT
-        window.location.href = `chat.html?task=${taskId}`;
-
-      })
-      .catch((err) => {
-        if (err !== "cancelled") {
-          showPopup(err.toString());
-        }
-      });
-    }
-
-    function startTask(taskId) {
-
+/* =========================
+   ACCEPT TASK
+========================= */
+function acceptTask(taskId) {
   const user = firebase.auth().currentUser;
+  if (!user) return showPopup("Login required");
 
-  if (!user) {
-    showPopup("Login required");
-    return;
-  }
+  const db = firebase.firestore();
+  const taskRef = db.collection("tasks").doc(taskId);
 
-  const taskRef = firebase.firestore()
-    .collection("tasks")
-    .doc(taskId);
-
-  taskRef.get().then((doc) => {
-
-    if (!doc.exists) {
-      showPopup("Task not found");
-      return;
-    }
+  db.runTransaction(async (transaction) => {
+    const doc = await transaction.get(taskRef);
+    if (!doc.exists) throw "Task not found";
 
     const task = doc.data();
 
-    // 🚫 ONLY WORKER CAN START
-    if (task.takenBy !== user.uid) {
-      showPopup("Only assigned worker can start");
-      return;
-    }
+    if (task.createdBy === user.uid) throw "You cannot accept your own task";
+    if (task.status === "taken") throw "Task already taken";
 
-    // 🚫 MUST BE TAKEN FIRST
-    if (task.status !== "taken") {
-      showPopup("Task already started");
-      return;
-    }
+    const confirmAccept = confirm(`Accept this task for ₦${task.price || 0}?`);
+    if (!confirmAccept) throw "cancelled";
 
-    // ✅ START TASK
-    taskRef.update({
+    transaction.update(taskRef, {
+      status: "taken",
+      takenBy: user.uid,
+      takenAt: firebase.firestore.FieldValue.serverTimestamp(),
+      chatId: "task_" + taskId
+    });
+  })
+  .then(() => {
+    const db = firebase.firestore();
+    const chatId = "task_" + taskId;
+
+    db.collection("chats").doc(chatId).set({
+      participants: [firebase.auth().currentUser.uid],
+      taskId: taskId,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    showPopup("Task accepted");
+    window.location.href = `chat.html?task=${taskId}`;
+  })
+  .catch(err => {
+    if (err !== "cancelled") showPopup(err.toString());
+  });
+}
+
+/* =========================
+   START TASK
+========================= */
+function startTask(taskId) {
+  const user = firebase.auth().currentUser;
+  const taskRef = firebase.firestore().collection("tasks").doc(taskId);
+
+  taskRef.get().then(doc => {
+    const task = doc.data();
+
+    if (task.takenBy !== user.uid) return showPopup("Not your task");
+    if (task.status !== "taken") return showPopup("Invalid state");
+
+    return taskRef.update({
       status: "in_progress",
       startedAt: firebase.firestore.FieldValue.serverTimestamp()
-    })
-
-    .then(() => {
-      showPopup("Task started");
-    })
-
-    .catch((err) => {
-      showPopup(err.message);
     });
-
-  });
-      
+  })
+  .then(() => showPopup("Task started"))
+  .catch(err => showPopup(err.message));
 }
-    function completeTask(taskId) {
 
+/* =========================
+   COMPLETE TASK
+========================= */
+function completeTask(taskId) {
   const user = firebase.auth().currentUser;
+  const taskRef = firebase.firestore().collection("tasks").doc(taskId);
 
-  if (!user) {
-    showPopup("Login required");
-    return;
-  }
-
-  const taskRef = firebase.firestore()
-    .collection("tasks")
-    .doc(taskId);
-
-  taskRef.get().then((doc) => {
-
-    if (!doc.exists) {
-      showPopup("Task not found");
-      return;
-    }
-
+  taskRef.get().then(doc => {
     const task = doc.data();
 
-    // 🚫 ONLY WORKER CAN COMPLETE
-    if (task.takenBy !== user.uid) {
-      showPopup("Only assigned worker can complete this task");
-      return;
-    }
+    if (task.takenBy !== user.uid) return showPopup("Not your task");
+    if (task.status !== "in_progress") return showPopup("Invalid state");
 
-    // 🚫 MUST BE IN PROGRESS
-    if (task.status !== "in_progress") {
-      showPopup("Task not in progress");
-      return;
-    }
-
-    // ✅ MARK COMPLETED (PENDING OWNER CONFIRMATION)
-    taskRef.update({
+    return taskRef.update({
       status: "completed_pending",
       completedAt: firebase.firestore.FieldValue.serverTimestamp()
-    })
-
-    .then(() => {
-      showPopup("Marked as completed. Waiting for confirmation.");
-    })
-
-    .catch((err) => {
-      showPopup(err.message);
     });
-
-  });
-
+  })
+  .then(() => showPopup("Waiting for confirmation"))
+  .catch(err => showPopup(err.message));
 }
-    function confirmTask(taskId) {
 
+/* =========================
+   CONFIRM TASK + WALLET TRANSFER
+========================= */
+function confirmTask(taskId) {
   const user = firebase.auth().currentUser;
+  const db = firebase.firestore();
+  const taskRef = db.collection("tasks").doc(taskId);
 
-  if (!user) {
-    showPopup("Login required");
-    return;
-  }
-
-  const taskRef = firebase.firestore()
-    .collection("tasks")
-    .doc(taskId);
-
-  taskRef.get().then((doc) => {
-
-    if (!doc.exists) {
-      showPopup("Task not found");
-      return;
-    }
-
+  taskRef.get().then(doc => {
     const task = doc.data();
 
-    // 🚫 ONLY TASK OWNER CAN CONFIRM
-    if (task.createdBy !== user.uid) {
-      showPopup("Only task owner can confirm");
-      return;
-    }
+    if (task.createdBy !== user.uid) return showPopup("Only owner can confirm");
+    if (task.status !== "completed_pending") return showPopup("Invalid state");
 
-    // 🚫 MUST BE WAITING CONFIRMATION
-    if (task.status !== "completed_pending") {
-      showPopup("Task not awaiting confirmation");
-      return;
-    }
+    const ok = confirm("Confirm completion?");
+    if (!ok) return;
 
-    // ⚠️ FINAL CONFIRMATION
-    const confirmDone = confirm(
-      "Confirm this task has been completed successfully?"
-    );
+    const amount = task.wallet?.amount || task.price || 0;
 
-    if (!confirmDone) return;
+    return db.runTransaction(async (transaction) => {
 
-    // ✅ FINAL CLOSE
-    taskRef.update({
-      status: "completed",
-      confirmedAt: firebase.firestore.FieldValue.serverTimestamp()
-    })
+      const freshTask = await transaction.get(taskRef);
 
-    .then(() => {
-      showPopup("Task completed successfully");
-    })
-
-    .catch((err) => {
-      showPopup(err.message);
-    });
-
-  });
-
-}
-    // LOAD TASKS
-    firebase.firestore().collection("tasks").onSnapshot(snapshot => {
-      taskList.innerHTML = "";
-
-      if (snapshot.empty) {
-        taskList.innerHTML = "<p>No tasks available</p>";
-        return;
-      }
-
-      snapshot.forEach(doc => {
-        const task = doc.data();
-
-        taskList.innerHTML += `
-          <div class="task-card">
-
-            <div class="task-title">
-              ${task.title || task.text || task.taskName || "Untitled Task"}
-            </div>
-
-            <div class="task-info">
-              ₦${task.price || 0} • ${task.description || "No description"}
-            </div>
-
-            <div class="task-bottom">
-
- <span class="badge ${task.status}">
-  ${task.status.toUpperCase()}
- </span>
-
-    ${task.status === "open" ? `
-
-  <button class="btn" onclick="acceptTask('${doc.id}')">
-    Accept
-  </button>
-
-` : task.status === "taken" ? `
-
-  <button class="btn" onclick="startTask('${doc.id}')">
-    Start Task
-  </button>
-
-` : task.status === "in_progress" ? `
-
-  <button class="btn" onclick="completeTask('${doc.id}')">
-    Mark Completed
-  </button>
-
-` : task.status === "completed_pending" ? `
-
-  <button class="btn" onclick="confirmTask('${doc.id}')">
-    Confirm Completion
-  </button>
-
-` : `
-
-  <span style="font-size:12px; color:#999;">
-    ${task.status.toUpperCase()}
-  </span>
-
-`}
-            </div>
-
-          </div>
-        `;
+      transaction.update(taskRef, {
+        status: "completed",
+        confirmedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+
+      const workerRef = db.collection("users").doc(task.takenBy);
+
+      transaction.update(workerRef, {
+        "wallet.available": firebase.firestore.FieldValue.increment(amount),
+        "wallet.locked": firebase.firestore.FieldValue.increment(-amount)
+      });
+
     });
-  </script>
+  })
+  .then(() => showPopup("Task completed & paid"))
+  .catch(err => showPopup(err.message));
+}
+
+/* =========================
+   LOAD TASKS
+========================= */
+firebase.firestore().collection("tasks").onSnapshot(snapshot => {
+  taskList.innerHTML = "";
+
+  snapshot.forEach(doc => {
+    const task = doc.data();
+
+    taskList.innerHTML += `
+      <div class="task-card">
+
+        <div class="task-title">
+          ${task.title || "Untitled Task"}
+        </div>
+
+        <div class="task-info">
+          ₦${task.price || 0} • ${task.description || ""}
+        </div>
+
+        <div class="task-bottom">
+
+          <span class="badge ${task.status}">
+            ${task.status.toUpperCase()}
+          </span>
+
+          ${task.status === "open" ? `
+            <button class="btn" onclick="acceptTask('${doc.id}')">Accept</button>
+          ` : task.status === "taken" ? `
+            <button class="btn" onclick="startTask('${doc.id}')">Start Task</button>
+          ` : task.status === "in_progress" ? `
+            <button class="btn" onclick="completeTask('${doc.id}')">Mark Completed</button>
+          ` : task.status === "completed_pending" ? `
+            <button class="btn" onclick="confirmTask('${doc.id}')">Confirm</button>
+          ` : `
+            <span style="font-size:12px; color:#999;">DONE</span>
+          `}
+
+        </div>
+      </div>
+    `;
+  });
+});
+</script>
 
 </body>
 </html>
