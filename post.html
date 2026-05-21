@@ -81,14 +81,24 @@ function postTask() {
   }
 
   firebase.firestore().collection("tasks").add({
-    title: title,
-    description: description,
-    price: Number(price),
-    status: "open",
-    createdBy: user.uid,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  })
-  .then(() => {
+  title: title,
+  description: description,
+  price: Number(price),
+
+  status: "open",
+
+  createdBy: user.uid,
+
+  // 🔥 WALLET SYSTEM
+  wallet: {
+    amount: Number(price),
+    locked: false,
+    released: false
+  },
+
+  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+})
+    .then(() => {
     showPopup("Task posted!");
     setTimeout(() => {
       window.location.href = "tasks.html";
