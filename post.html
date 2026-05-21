@@ -66,7 +66,7 @@ function showPopup(message) {
 function postTask() {
   const title = document.getElementById("title").value.trim();
   const description = document.getElementById("description").value.trim();
-  const price = document.getElementById("price").value.trim();
+  const price = Number(document.getElementById("price").value.trim());
 
   if (!title || !description || !price) {
     showPopup("Fill all fields");
@@ -80,31 +80,56 @@ function postTask() {
     return;
   }
 
-  firebase.firestore().collection("tasks").add({
-  title: title,
-  description: description,
-  price: Number(price),
+  const userRef = firebase.firestore().collection("users").doc(user.uid);
 
-  status: "open",
+  userRef.get().then((doc) => {
 
-  createdBy: user.uid,
+    const userData = doc.data();
+    const available = userData?.wallet?.available || 0;
 
-  // 🔥 WALLET SYSTEM
-  wallet: {
-    amount: Number(price),
-    locked: false,
-    released: false
-  },
+    // 🚨 STEP 1: CHECK BALANCE
+    if (available < price) {
+      showPopup("Insufficient wallet balance");
+      return;
+    }
 
-  createdAt: firebase.firestore.FieldValue.serverTimestamp()
-})
-    .then(() => {
-    showPopup("Task posted!");
+    // 🚨 STEP 2: CREATE TASK
+    return firebase.firestore().collection("tasks").add({
+      title: title,
+      description: description,
+      price: price,
+
+      status: "open",
+      createdBy: user.uid,
+
+      wallet: {
+        amount: price,
+        locked: true,
+        released: false
+      },
+
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+  })
+  .then((taskRef) => {
+
+    if (!taskRef) return;
+
+    // 🚨 STEP 3: DEDUCT FROM USER WALLET
+    return userRef.update({
+      "wallet.available": firebase.firestore.FieldValue.increment(-price),
+      "wallet.locked": firebase.firestore.FieldValue.increment(price)
+    });
+
+  })
+  .then(() => {
+    showPopup("Task posted & funds locked");
     setTimeout(() => {
       window.location.href = "tasks.html";
     }, 1000);
   })
-  .catch(err => {
+  .catch((err) => {
     showPopup(err.message);
   });
 }
