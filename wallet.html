@@ -3,22 +3,81 @@
 <head>
   <title>Wallet - RunIT</title>
   <link rel="stylesheet" href="style.css">
+
+  <style>
+    .wallet-card{
+      background:white;
+      padding:15px;
+      border-radius:12px;
+      margin:15px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .money-row{
+      display:flex;
+      justify-content:space-between;
+      margin:10px 0;
+      font-size:15px;
+    }
+
+    .label{
+      color:#666;
+    }
+
+    .value{
+      font-weight:bold;
+    }
+
+    .available{ color:#1a9c37; }
+    .locked{ color:#ff9800; }
+    .pending{ color:#8a2be2; }
+
+    .main-btn{
+      width:90%;
+      margin:20px auto;
+      display:block;
+      padding:12px;
+      border:none;
+      border-radius:8px;
+      background:#6c4cff;
+      color:white;
+      font-size:15px;
+    }
+
+    .header{
+      padding:15px;
+      font-size:18px;
+      font-weight:bold;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="app">
+  <div class="header">💰 Wallet</div>
 
-  <div class="header">
-    <div>Wallet</div>
-  </div>
-    
-  <div class="card">
-    <p>Balance</p>
-    <h1>₦<span id="balance">0</span></h1>
+  <div class="wallet-card">
+
+    <div class="money-row">
+      <span class="label">Available</span>
+      <span class="value available">₦<span id="available">0</span></span>
+    </div>
+
+    <div class="money-row">
+      <span class="label">Locked</span>
+      <span class="value locked">₦<span id="locked">0</span></span>
+    </div>
+
+    <div class="money-row">
+      <span class="label">Pending</span>
+      <span class="value pending">₦<span id="pending">0</span></span>
+    </div>
+
   </div>
 
-  <button class="main-btn" onclick="withdraw()">Withdraw</button>
+  <button class="main-btn" onclick="withdraw()">
+    Withdraw (Coming Soon)
+  </button>
 
   <div class="nav">
     <div onclick="location.href='index.html'">🏠 Home</div>
@@ -26,16 +85,53 @@
     <div>💳 Wallet</div>
   </div>
 
-</div>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-  <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase.js"></script>
 
-<!-- Your app -->
-<script src="firebase.js"></script>
-<script src="script.js"></script>
-  
+  <script>
+
+    const db = firebase.firestore();
+
+    firebase.auth().onAuthStateChanged((user) => {
+
+      if(!user){
+        window.location.href = "login.html";
+        return;
+      }
+
+      loadWallet(user.uid);
+
+    });
+
+    function loadWallet(uid){
+
+      db.collection("users").doc(uid)
+        .onSnapshot((doc) => {
+
+          const data = doc.data() || {};
+
+          document.getElementById("available").innerText =
+            data.wallet?.available || 0;
+
+          document.getElementById("locked").innerText =
+            data.wallet?.locked || 0;
+
+          document.getElementById("pending").innerText =
+            data.wallet?.pending || 0;
+
+        });
+
+    }
+
+    function withdraw(){
+      alert("Withdrawal system coming next");
+    }
+
+  </script>
+
 </body>
 </html>
