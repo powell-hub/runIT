@@ -127,15 +127,22 @@ function signup() {
       const user = userCredential.user;
 
       await firebase.firestore().collection("users").doc(user.uid).set({
-        username,
-        email,
-        hostel,
-        level,
-        department,
-        phone,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+  username,
+  email,
+  hostel,
+  level,
+  department,
+  phone,
 
+  wallet: {
+    available: 0,
+    locked: 0,
+    pending: 0
+  },
+
+  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+});
+      
       await user.updateProfile({
         displayName: username
       });
